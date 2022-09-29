@@ -27,7 +27,11 @@ class FastTrajectoryReplanning():
         self.grid = None
 
     
-    def print_path(self, current):
+    def print_path(self, current) -> None:
+        '''
+            This function prints a list of positions that
+            the agent travels to get from start to the goal state.
+        '''
         path = []
 
         while(current.parent):
