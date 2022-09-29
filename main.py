@@ -27,6 +27,15 @@ class FastTrajectoryReplanning():
         self.grid = None
 
     
+    def print_path(self, current):
+        path = []
+
+        while(current.parent):
+            path.append(current.position)
+            current = current.parent
+        
+        print(path[::-1])
+        
     def get_manhattan_dist(self, start, goal) -> int:
         '''
             This function returns Norm 1 distance between start and the goal state
@@ -51,13 +60,14 @@ class FastTrajectoryReplanning():
             Here we check the following
                 1. Has the node been already visited
                 2. Does the node lie within grid boundaries
+                3. Is there an obstacle? (TBD)
         '''
         current_legal_moves = []
 
         for move in self.valid_moves:
             new_position = tuple(map(sum, zip(move, current.position)))
-            if(new_position[0] > 0 or new_position[1] > 0):
-                if(new_position[0] < len(self.grid) or new_position[1] < len(self.grid)):
+            if(new_position[0] >= 0 and new_position[1] >= 0):
+                if(new_position[0] < len(self.grid) and new_position[1] < len(self.grid)):
                     current_legal_moves.append(new_position)
 
         return current_legal_moves
@@ -109,33 +119,35 @@ class FastTrajectoryReplanning():
             # Popping the node from the open list
             self.open_list.remove(current)
 
+            if current.position == goal:
+                return current
+
             # f_n = self.counter + h_n
 
             moves = self.get_valid_moves(current)
 
             for move in moves:
-                child_state = Node(self.perform_move(move, current.position))
+                child_state = Node(move)
                 child_state.parent = current
-                if child_state == goal:
-                    break
-                else:
-                    child_state.h = self.get_manhattan_dist(child_state.position, goal)
-                    child_state.g = current.g + self.get_manhattan_dist(
-                        child_state.position, current.position)
-                    child_state.f = child_state.g + child_state.h
+                
+                # else:
+                child_state.h = self.get_manhattan_dist(child_state.position, goal)
+                child_state.g = current.g + self.get_manhattan_dist(
+                    child_state.position, current.position)
+                child_state.f = child_state.g + child_state.h
+
+                if self.check_node_in_closed_list(child_state):
+                    continue
 
                 if self.check_node_in_open_list(child_state):
                     continue
                 
-                if self.check_node_in_closed_list(child_state):
-                    continue
-
                 else:
                     self.open_list.append(child_state)
 
             self.closed_list.append(current)
 
-        print(self.closed_list)
+            
 
 
     def run(self, start=None, goal=None) -> None:
@@ -143,7 +155,8 @@ class FastTrajectoryReplanning():
             This function runs the A* algorithm on the generated grid
         '''
         self.generate_grid()
-        self.a_star(self.grid, start, goal)
+        curr = self.a_star(self.grid, start, goal)
+        self.print_path(curr)
 
     def generate_grid(self) -> None:
         '''
