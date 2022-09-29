@@ -119,20 +119,23 @@ class FastTrajectoryReplanning():
                 if child_state == goal:
                     break
                 else:
-                    child_state.h = self.get_manhattan_dist(child_state, goal)
-                    child_state.g = current.g + self.get_manhattan_dist(child_state, current)
+                    child_state.h = self.get_manhattan_dist(child_state.position, goal)
+                    child_state.g = current.g + self.get_manhattan_dist(
+                        child_state.position, current.position)
                     child_state.f = child_state.g + child_state.h
 
-                if not self.check_node_in_open_list(child_state):
+                if self.check_node_in_open_list(child_state):
                     continue
                 
-                if not self.check_node_in_closed_list(child_state):
+                if self.check_node_in_closed_list(child_state):
                     continue
 
                 else:
                     self.open_list.append(child_state)
 
             self.closed_list.append(current)
+
+        print(self.closed_list)
 
 
     def run(self, start=None, goal=None) -> None:
@@ -151,20 +154,15 @@ class FastTrajectoryReplanning():
         '''
 
         # Dummy grid
-        self.grid = [[0,0,0,0,0,0,0,0,0,0],
-                    [0,0,0,0,0,0,0,0,0,0],
-                    [0,0,0,0,0,0,0,0,0,0],
-                    [0,0,0,0,0,0,0,0,0,0],
-                    [0,0,0,0,0,0,0,0,0,0],
-                    [0,0,0,0,0,0,0,0,0,0],
-                    [0,0,0,0,0,0,0,0,0,0],
-                    [0,0,0,0,0,0,0,0,'X',0],
-                    [0,0,0,0,0,0,0,0,0,0],
-                    [0,0,0,0,0,0,0,0,0,0]]
+        self.grid = [[0,0,0,0,0],
+                    [0,0,0,0,0],
+                    [0,0,0,0,0],
+                    [0,0,0,"X",0],
+                    [0,0,0,0,0]]
 
 
 
 if __name__ == "__main__":
     obj = FastTrajectoryReplanning()
 
-    obj.run(start = (0, 0), goal = (7,8))
+    obj.run(start = (0, 0), goal = (3,3))
