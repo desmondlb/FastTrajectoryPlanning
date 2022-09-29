@@ -1,5 +1,10 @@
-
 class Node():
+    '''
+        Here we create a node class which store the following
+            1. Position of the node in the grid
+            2. Parent of the node
+            3. f(n),g(n) and h(n) values for the node
+    '''
     def __init__(self, position=None, parent=None) -> None:
         self.position = position
         self.parent = parent
@@ -19,11 +24,20 @@ class FastTrajectoryReplanning():
 
         self.counter = 0
 
-    def get_manhattan_dist(self, start, goal):
-        # Returns Norm 1 distance between start and the goal state
+        self.grid = None
+
+    
+    def get_manhattan_dist(self, start, goal) -> int:
+        '''
+            This function returns Norm 1 distance between start and the goal state
+        '''
         return abs(start[0]-goal[0]) + abs(start[1]-goal[1])
 
-    def get_priority_node(self):
+    def get_priority_node(self) -> Node:
+        '''
+            This function returns the node with the least f value
+            from the Open list
+        '''
         priority_node = self.open_list[0]
 
         for n in self.open_list:
@@ -32,7 +46,7 @@ class FastTrajectoryReplanning():
 
         return priority_node
 
-    def get_valid_moves(self, current):
+    def get_valid_moves(self, current) -> list:
         '''
             Here we check the following
                 1. Has the node been already visited
@@ -40,33 +54,56 @@ class FastTrajectoryReplanning():
         '''
         current_legal_moves = []
 
-    def perform_move(self, move):
-        for m in self.valid_moves:
-            pass
+        for move in self.valid_moves:
+            new_position = tuple(map(sum, zip(move, current.position)))
+            if(new_position[0] > 0 or new_position[1] > 0):
+                if(new_position[0] < len(self.grid) or new_position[1] < len(self.grid)):
+                    current_legal_moves.append(new_position)
 
-    def check_node_in_open_list(self, child_state):
+        return current_legal_moves
+
+
+    def perform_move(self, move, current_position) -> tuple:
+        '''
+            This function performs the selected move on the current_position
+            Returns the updated position
+        '''
+        return tuple(map(sum, zip(move, current_position)))
+
+    def check_node_in_open_list(self, child_state) -> bool:
+        '''
+            This function checks whether a child node is in the open list
+            and whether it has a better f value
+        '''
         for n in self.open_list:
             if((n.position == child_state.position) and n.f < child_state.f):
                 return True             
             
         return False
 
-    def check_node_in_closed_list(self, child_state):
+    def check_node_in_closed_list(self, child_state) -> bool:
+        '''
+            This function checks whether a child node is in the closed list
+            and whether it has a better f value
+        '''
         for n in self.closed_list:
             if((n.position == child_state.position) and n.f < child_state.f):
                 return True             
             
         return False
 
-    def a_star(self, grid, start, goal):
-        
-        self.open_list.append(Node(position=start))
+    def a_star(self, grid, start, goal) -> None:
+        '''
+            Implementation of the simple A* algorithm
+        '''
+        start_node = Node(position=start)
+        start_node.g = 0
+        self.open_list.append(start_node)
 
         while(self.open_list != []):
             
             current = self.get_priority_node()
             current.h = self.get_manhattan_dist(start, goal)
-            current.g = current.h
             current.f = current.g + current.h
 
             # Popping the node from the open list
@@ -77,7 +114,7 @@ class FastTrajectoryReplanning():
             moves = self.get_valid_moves(current)
 
             for move in moves:
-                child_state = Node(self.perform_move(move))
+                child_state = Node(self.perform_move(move, current.position))
                 child_state.parent = current
                 if child_state == goal:
                     break
@@ -98,24 +135,36 @@ class FastTrajectoryReplanning():
             self.closed_list.append(current)
 
 
-    def run(self):
-        grid = [[0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,'X',0],
-                [0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0]]
+    def run(self, start=None, goal=None) -> None:
+        '''
+            This function runs the A* algorithm on the generated grid
+        '''
+        self.generate_grid()
+        self.a_star(self.grid, start, goal)
 
-        start = (0, 0)
-        goal = (7,8)
+    def generate_grid(self) -> None:
+        '''
+            This function generates N*N grid with the following properties
+                1. Obstacles generated with 30% probability to construct a maze like structure
+                2. Target position denoted with "X"
+                3. Obstacles denoted with 1
+        '''
 
-        self.a_star(grid, start, goal)
+        # Dummy grid
+        self.grid = [[0,0,0,0,0,0,0,0,0,0],
+                    [0,0,0,0,0,0,0,0,0,0],
+                    [0,0,0,0,0,0,0,0,0,0],
+                    [0,0,0,0,0,0,0,0,0,0],
+                    [0,0,0,0,0,0,0,0,0,0],
+                    [0,0,0,0,0,0,0,0,0,0],
+                    [0,0,0,0,0,0,0,0,0,0],
+                    [0,0,0,0,0,0,0,0,'X',0],
+                    [0,0,0,0,0,0,0,0,0,0],
+                    [0,0,0,0,0,0,0,0,0,0]]
+
+
 
 if __name__ == "__main__":
     obj = FastTrajectoryReplanning()
 
-    obj.run()
+    obj.run(start = (0, 0), goal = (7,8))
