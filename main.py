@@ -70,9 +70,13 @@ class FastTrajectoryReplanning():
 
         for move in self.valid_moves:
             new_position = tuple(map(sum, zip(move, current.position)))
+
+            
             if(new_position[0] >= 0 and new_position[1] >= 0):
                 if(new_position[0] < len(self.grid) and new_position[1] < len(self.grid)):
-                    current_legal_moves.append(new_position)
+                    if(self.grid[new_position[0]][new_position[1]]==1):
+                        pass
+                    else: current_legal_moves.append(new_position)
 
         return current_legal_moves
 
@@ -171,10 +175,10 @@ class FastTrajectoryReplanning():
         '''
 
         # Dummy grid
-        self.grid = [[0,0,0,0,0],
-                    [0,0,0,0,0],
-                    [0,0,0,0,0],
-                    [0,0,0,"X",0],
+        self.grid = [[0,0,1,0,0],
+                    [0,0,1,0,0],
+                    [0,0,1,0,0],
+                    [0,0,1,"X",0],
                     [0,0,0,0,0]]
 
 
