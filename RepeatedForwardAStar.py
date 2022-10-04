@@ -26,6 +26,9 @@ class FastTrajectoryReplanning():
 
         self.grid = None
 
+        self.counter = 0
+        self.search = dict()
+
     
     def print_path(self, current) -> None:
         '''
@@ -96,7 +99,7 @@ class FastTrajectoryReplanning():
             and whether it has a better f value
         '''
         for n in self.open_list:
-            if((n.position == child_state.position) and n.f < child_state.f):
+            if(n.position == child_state.position):
                 return True             
             
         return False
@@ -112,89 +115,82 @@ class FastTrajectoryReplanning():
             
         return False
 
-    def a_star(self, grid, start, goal) -> None:
+    def compute_path(self, grid, start_node, goal_node) -> None:
         '''
             Implementation of the simple A* algorithm
         '''
-        start_node = Node(position=start)
-        start_node.g = 0
-        self.open_list.append(start_node)
+        s = self.get_priority_node()
+        while(goal_node.g > s.f):
+            self.open_list.remove(s)
+            self.closed_list.append(s)
 
-        while(self.open_list != []):
-            
-            #---------------------------------------------
-            # Calculate the h and f values of Current node
-            #---------------------------------------------
-            current = self.get_priority_node()
-            current.h = self.get_manhattan_dist(start, goal)
-            current.f = current.g + current.h
-            
-            #------------------------------------
-            # Popping the node from the open list
-            #------------------------------------
-            self.open_list.remove(current)
+            moves = self.get_valid_moves(s)
 
-            if current.position == goal:
-                return current
+            for succ in moves:
+                succ_node = Node(position=succ)
+                if self.search(succ) < self.counter:
+                    
+                    succ_node.g = pow(len(self.grid),2) + 10
+                    self.search[succ_node.position] = self.counter
 
-            moves = self.get_valid_moves(current)
+                if succ_node.g > s.g + 1:
 
-            for move in moves:
-                child_state = Node(move)
-                #-------------------------------------------
-                # Set the child's parent as the current node
-                #-------------------------------------------
-                child_state.parent = current
-                
-                #-----------------------------------------------
-                # Update the h, g and f values of the child node
-                #-----------------------------------------------
-                child_state.h = self.get_manhattan_dist(child_state.position, goal)
-                child_state.g = current.g + self.get_manhattan_dist(
-                    child_state.position, current.position)
-                child_state.f = child_state.g + child_state.h
+                    succ_node.g = s.g + 1
+                    succ_node.f = s.g + self.get_manhattan_dist(succ, goal_node.position)
+                    succ_node.parent = s
+                    if self.check_node_in_open_list(succ_node):
+                        self.open_list.remove(succ_node)
 
-                #------------------------------------------------
-                # If the node is already in closed list then skip
-                #------------------------------------------------
-                if self.check_node_in_closed_list(child_state):
-                    continue
-                
-                #----------------------------------------------
-                # If the node is already in open list then skip
-                #----------------------------------------------
-
-                # Update the priority? (TBD)
-                if self.check_node_in_open_list(child_state):
-                    continue
-                
-                #-----------------------------------------
-                # Else add the child node to the open list
-                #-----------------------------------------
-                else:
-                    self.open_list.append(child_state)
-
-            #---------------------------------------------------
-            # Finally append the current node to the closed list
-            #---------------------------------------------------
-            self.closed_list.append(current)
-
-        #----------------------------------------------------------------------
-        # If open list is empty in the end then return null to indicate no path
-        #----------------------------------------------------------------------
-        if not self.open_list: return 
+                    self.closed_list.append(succ_node)
             
 
 
+    def repeated_forward_a_star(self, start, goal):
+
+        for i in range(len(self.grid)):
+            for j in range(len(self.grid[0])):
+                self.search[tuple(i,j)] = 0
+        
+        while(start!=goal):
+            self.counter += 1
+
+            start_node = Node(position=start)
+            start_node.g = 0
+            self.search[start_node.position] = self.counter
+
+            goal_node = Node(position=start)
+            goal_node.g = pow(len(self.grid),2) + 10
+            self.search[goal_node.position] = self.counter
+
+            self.open_list = []
+            self.closed_list = []
+
+            start_node.h = self.get_manhattan_dist(start, goal)
+            start_node.f = start_node.g + start_node.h
+
+            self.open_list.append(start_node)
+
+            self.compute_path(start_node, goal_node)
+
+            if not self.open_list:
+                print("Cannot reach the target")
+                return
+
+        
+            if curr:
+            self.print_path(curr)
+
+        print("I reached the target")
+        return
+    
     def run(self, start=None, goal=None) -> None:
         '''
             This function runs the A* algorithm on the generated grid
         '''
         self.generate_grid()
-        curr = self.a_star(self.grid, start, goal)
-        if curr:
-            self.print_path(curr)
-        else: print("Cannot reach the target")
+
+        self.repeated_forward_a_star(self.grid, start, goal)
+        
 
     def generate_grid(self) -> None:
         '''
