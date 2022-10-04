@@ -19,10 +19,10 @@ class FastTrajectoryReplanning():
         self.open_list = []
         self.closed_list = []
 
-        # valid moves up, down, left, right
+        #---------------------------------------------------------
+        # Valid moves: up, down, left, right
+        #---------------------------------------------------------
         self.valid_moves = [(0, 1), (0, -1), (-1, 0), (1, 0)]
-
-        self.counter = 0
 
         self.grid = None
 
@@ -50,6 +50,7 @@ class FastTrajectoryReplanning():
         '''
             This function returns the node with the least f value
             from the Open list
+            TBD: Implementation with priority heap/queue
         '''
         priority_node = self.open_list[0]
 
@@ -62,21 +63,22 @@ class FastTrajectoryReplanning():
     def get_valid_moves(self, current) -> list:
         '''
             Here we check the following
-                1. Has the node been already visited
-                2. Does the node lie within grid boundaries
-                3. Is there an obstacle? (TBD)
+                1. Does the node lie within grid boundaries
+                2. Is there an obstacle?
         '''
         current_legal_moves = []
 
         for move in self.valid_moves:
+
+            #---------------------------------------------------------
+            # Adding the move to current position updates the position
+            #---------------------------------------------------------
             new_position = tuple(map(sum, zip(move, current.position)))
 
-            
             if(new_position[0] >= 0 and new_position[1] >= 0):
                 if(new_position[0] < len(self.grid) and new_position[1] < len(self.grid)):
-                    if(self.grid[new_position[0]][new_position[1]]==1):
-                        pass
-                    else: current_legal_moves.append(new_position)
+                    if not self.grid[new_position[0]][new_position[1]]==1:
+                        current_legal_moves.append(new_position)
 
         return current_legal_moves
 
@@ -120,41 +122,67 @@ class FastTrajectoryReplanning():
 
         while(self.open_list != []):
             
+            #---------------------------------------------
+            # Calculate the h and f values of Current node
+            #---------------------------------------------
             current = self.get_priority_node()
             current.h = self.get_manhattan_dist(start, goal)
             current.f = current.g + current.h
-
+            
+            #------------------------------------
             # Popping the node from the open list
+            #------------------------------------
             self.open_list.remove(current)
 
             if current.position == goal:
                 return current
 
-            # f_n = self.counter + h_n
-
             moves = self.get_valid_moves(current)
 
             for move in moves:
                 child_state = Node(move)
+                #-------------------------------------------
+                # Set the child's parent as the current node
+                #-------------------------------------------
                 child_state.parent = current
                 
-                # else:
+                #-----------------------------------------------
+                # Update the h, g and f values of the child node
+                #-----------------------------------------------
                 child_state.h = self.get_manhattan_dist(child_state.position, goal)
                 child_state.g = current.g + self.get_manhattan_dist(
                     child_state.position, current.position)
                 child_state.f = child_state.g + child_state.h
 
+                #------------------------------------------------
+                # If the node is already in closed list then skip
+                #------------------------------------------------
                 if self.check_node_in_closed_list(child_state):
                     continue
+                
+                #----------------------------------------------
+                # If the node is already in open list then skip
+                #----------------------------------------------
 
+                # Update the priority? (TBD)
                 if self.check_node_in_open_list(child_state):
                     continue
                 
+                #-----------------------------------------
+                # Else add the child node to the open list
+                #-----------------------------------------
                 else:
                     self.open_list.append(child_state)
 
+            #---------------------------------------------------
+            # Finally append the current node to the closed list
+            #---------------------------------------------------
             self.closed_list.append(current)
 
+        #----------------------------------------------------------------------
+        # If open list is empty in the end then return null to indicate no path
+        #----------------------------------------------------------------------
+        if not self.open_list: return 
             
 
 
@@ -164,7 +192,9 @@ class FastTrajectoryReplanning():
         '''
         self.generate_grid()
         curr = self.a_star(self.grid, start, goal)
-        self.print_path(curr)
+        if curr:
+            self.print_path(curr)
+        else: print("Cannot reach the target")
 
     def generate_grid(self) -> None:
         '''
@@ -173,8 +203,9 @@ class FastTrajectoryReplanning():
                 2. Target position denoted with "X"
                 3. Obstacles denoted with 1
         '''
-
+        #-----------
         # Dummy grid
+        #-----------
         self.grid = [[0,0,1,0,0],
                     [0,0,1,0,0],
                     [0,0,1,0,0],
