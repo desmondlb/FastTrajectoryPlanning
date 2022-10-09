@@ -25,7 +25,8 @@ class FastTrajectoryReplanning():
         #-----------------------------------
         self.valid_moves = [(0, 1), (0, -1), (-1, 0), (1, 0)]
 
-        self.grid = None
+        self.actual_grid = None
+        self.explored_grid = None
 
         #--------------------------------------------------------------
         # Used to break ties in favour of either large or small g value
@@ -109,8 +110,8 @@ class FastTrajectoryReplanning():
             new_position = tuple(map(sum, zip(move, current.position)))
 
             if(new_position[0] >= 0 and new_position[1] >= 0):
-                if(new_position[0] < len(self.grid) and new_position[1] < len(self.grid)):
-                    if not self.grid[new_position[0]][new_position[1]]==1:
+                if(new_position[0] < len(self.explored_grid) and new_position[1] < len(self.explored_grid)):
+                    if not self.explored_grid[new_position[0]][new_position[1]]==1:
                         current_legal_moves.append(new_position)
 
         return current_legal_moves
@@ -152,6 +153,7 @@ class FastTrajectoryReplanning():
         start_node = Node(position=start)
         start_node.g = 0
         self.open_list.append(start_node)
+        current = start_node
 
         while(self.open_list != []):
             
@@ -172,7 +174,7 @@ class FastTrajectoryReplanning():
             self.closed_list.append(current)
 
             if current.position == goal:
-                return current
+                break
 
             moves = self.get_valid_moves(current)
 
@@ -213,9 +215,12 @@ class FastTrajectoryReplanning():
             
 
         #----------------------------------------------------------------------
-        # If open list is empty in the end then return null to indicate no path
+        # If open list is empty in the end then return current to indicate no path
         #----------------------------------------------------------------------
-        if not self.open_list: return 
+        # if not self.open_list: return current
+
+
+        return current
             
 
 
@@ -225,9 +230,23 @@ class FastTrajectoryReplanning():
         '''
         self.tie_breaker_pref = tie_break
         self.generate_grid()
-        curr = self.a_star(self.grid, start, goal)
-        if curr:
-            self.print_path(curr)
+        planned_dest = self.a_star(self.grid, start, goal)
+
+        if planned_dest.position == goal:
+            self.print_path(planned_dest)
+            # trace planned path back to the the node after start and make that move
+            # Update current position
+            # Check the surroundings and update the explored grid
+            # Empty open and closed list
+            # Call A* again with the new start state
+
+
+        # elif planned_path.position != start:
+            # Encountered a dead end??
+            # Take a new step
+            # Check the surroundings and update the explored grid
+            # Call A* again with the new start state
+            # start = curr.position
         else: print("Cannot reach the target")
 
         print("Number of nodes expanded : " + str(len(self.closed_list)))
