@@ -263,13 +263,16 @@ class FastTrajectoryReplanning():
         if planned_dest.position == goal:
             self.print_path(planned_dest)
             # trace planned path back to the the node after start and make that move
-            # Update current position
+            # Update current position if it's not blocked
+            # If blocked then start = current state
             # Check the surroundings and update the explored grid
             # Empty open and closed list
             # Call A* again with the new start state
 
 
+
         # elif planned_path.position != start:
+            # Maybe this elif condition is not needed
             # Encountered a dead end??
             # Take a new step
             # Check the surroundings and update the explored grid
