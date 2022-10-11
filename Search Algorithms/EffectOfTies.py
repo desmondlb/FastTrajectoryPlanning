@@ -1,4 +1,6 @@
 from config import *
+from matplotlib import pyplot
+
 class Node():
     '''
         Here we create a node class which store the following
@@ -16,22 +18,20 @@ class Node():
 
 class FastTrajectoryReplanning():
 
-    def __init__(self) -> None:
+    def __init__(self, tie_break = LARGE_G_VALUE) -> None:
         self.open_list = []
         self.closed_list = []
+        self.actual_grid, self.explored_grid = self.generate_grid()
 
         #-----------------------------------
         # Valid moves: up, down, left, right
         #-----------------------------------
         self.valid_moves = [(0, 1), (0, -1), (-1, 0), (1, 0)]
 
-        self.actual_grid = None
-        self.explored_grid = None
-
         #--------------------------------------------------------------
         # Used to break ties in favour of either large or small g value
         #--------------------------------------------------------------
-        self.tie_breaker_pref = LARGE_G_VALUE
+        self.tie_breaker_pref = tie_break
 
     
     def print_path(self, current) -> None:
@@ -45,7 +45,7 @@ class FastTrajectoryReplanning():
             path.append(current.position)
             current = current.parent
         
-        print(path[::-1])
+        return path[::-1]
         
     def get_manhattan_dist(self, start, goal) -> int:
         '''
@@ -107,7 +107,7 @@ class FastTrajectoryReplanning():
             #---------------------------------------------------------
             # Adding the move to current position updates the position
             #---------------------------------------------------------
-            new_position = tuple(map(sum, zip(move, current.position)))
+            new_position = tuple(map(sum, zip(move, current)))
 
             if(new_position[0] >= 0 and new_position[1] >= 0):
                 if(new_position[0] < len(self.explored_grid) and new_position[1] < len(self.explored_grid)):
@@ -117,12 +117,12 @@ class FastTrajectoryReplanning():
         return current_legal_moves
 
 
-    def perform_move(self, move, current_position) -> tuple:
-        '''
-            This function performs the selected move on the current_position
-            Returns the updated position
-        '''
-        return tuple(map(sum, zip(move, current_position)))
+    # def perform_move(self, move, current_position) -> tuple:
+    #     '''
+    #         This function performs the selected move on the current_position
+    #         Returns the updated position
+    #     '''
+    #     return tuple(map(sum, zip(move, current_position)))
 
     def check_node_in_open_list(self, child_state) -> bool:
         '''
@@ -146,7 +146,7 @@ class FastTrajectoryReplanning():
             
         return False
 
-    def a_star(self, grid, start, goal) -> None:
+    def a_star(self, start, goal) -> None:
         '''
             Implementation of the simple A* algorithm
         '''
@@ -176,7 +176,7 @@ class FastTrajectoryReplanning():
             if current.position == goal:
                 break
 
-            moves = self.get_valid_moves(current)
+            moves = self.get_valid_moves(current.position)
 
             for move in moves:
                 child_state = Node(move)
@@ -223,23 +223,84 @@ class FastTrajectoryReplanning():
         return current
             
 
+    #function to move agent through the grid; path recorded in travelled_path
+    def move_in_real_grid(self, current_state, path) -> list:
+        travelled_path = []
+        for cell in path:
+            if self.actual_grid[cell[0]][cell[1]] != 1:
+                current_state = cell
+                travelled_path.append(current_state)
+            else:
+                break
+        return travelled_path
+    
+    #uses get_valid_moves() to update agent's memory
+    def observe_nearby_cells(self, current_state) -> None:
+        field_of_view = self.get_valid_moves(current=current_state)
+        for cell in field_of_view:
+            if self.actual_grid[cell[0]][cell[1]] == 1 and self.explored_grid[cell[0]][cell[1]] == 0:
+                self.explored_grid[cell[0]][cell[1]] = 1
 
-    def run(self, start=None, goal=None, tie_break=None) -> None:
+
+    #function to visualize the final path taken by the agent in the grid (needs tweaking)
+    def temporary_visualize(self, path):
+        for point in path:
+            self.actual_grid[point[0]][point[1]] = 0.5
+        pyplot.imshow(self.actual_grid)
+        pyplot.show()
+
+    def run(self, start=None, goal=None) -> None:
         '''
             This function runs the A* algorithm on the generated grid
         '''
-        self.tie_breaker_pref = tie_break
-        self.generate_grid()
-        planned_dest = self.a_star(self.grid, start, goal)
+        # self.tie_breaker_pref = tie_break
+        # self.generate_grid()
+        # planned_dest = self.a_star(self.grid, start, goal)
 
-        if planned_dest.position == goal:
-            self.print_path(planned_dest)
-            # trace planned path back to the the node after start and make that move
-            # Update current position if it's not blocked
-            # If blocked then start = current state
+        final_path = []
+        final_path.append(start)
+        end = False
+        path_exist = True
+
+        while path_exist and not end:
             # Check the surroundings and update the explored grid
+            self.observe_nearby_cells(current_state=start)
+
             # Empty open and closed list
-            # Call A* again with the new start state
+            self.open_list = []
+            self.closed_list = []
+
+            planned_dest = self.a_star(start, goal)
+            # planned_path = self.run(start=start_state, goal=goal)
+            
+            if planned_dest.position == goal:
+                # self.print_path(planned_dest)
+                # trace planned path back to the the node after start and make that move
+                travelled_path = self.move_in_real_grid(
+                    current_state=start, path=self.print_path(planned_dest))
+
+                if(travelled_path and travelled_path[-1] == goal):
+                    end = True
+                else:
+                    start = travelled_path[-1]
+                
+                final_path.extend(travelled_path)
+            else:
+                path_exist = False
+            
+
+            
+
+            
+
+            # if planned_dest.position == goal:
+            #     self.print_path(planned_dest)
+                # trace planned path back to the the node after start and make that move
+                # Update current position if it's not blocked
+                # If blocked then start = current state
+                # Check the surroundings and update the explored grid
+                # Empty open and closed list
+                # Call A* again with the new start state
 
 
         # elif planned_path.position != start:
@@ -249,10 +310,12 @@ class FastTrajectoryReplanning():
             # Check the surroundings and update the explored grid
             # Call A* again with the new start state
             # start = curr.position
-        else: print("Cannot reach the target")
-
-        print("Number of nodes expanded : " + str(len(self.closed_list)))
-        print("Nodes expanded : " + str([n.position for n in self.closed_list]))
+        if not path_exist: print("Cannot reach the target")
+        else:
+            print("Number of nodes expanded : " + str(len(self.closed_list)))
+            print("Nodes expanded : " + str([n.position for n in self.closed_list]))
+            print(final_path)
+            self.temporary_visualize(path=final_path)
 
     def generate_grid(self) -> None:
         '''
@@ -264,16 +327,20 @@ class FastTrajectoryReplanning():
         #-----------
         # Dummy grid
         #-----------
-        self.grid = [[0,0,1,0,0],
+        actual_grid = [[0,0,1,0,0],
                     [0,0,1,0,0],
-                    [0,0,1,0,0],
+                    [0,0,0,1,0],
                     [0,0,1,"X",0],
                     [0,0,0,0,0]]
+
+        explored_grid = [[0]*len(actual_grid) for _ in range(len(actual_grid))]
+
+        return actual_grid, explored_grid
 
 
 
 if __name__ == "__main__":
-    obj1 = FastTrajectoryReplanning()
-    obj1.run(start = (0, 0), goal = (3,3), tie_break=SMALL_G_VALUE)
-    obj2 = FastTrajectoryReplanning()
-    obj2.run(start = (0, 0), goal = (3,3), tie_break=LARGE_G_VALUE)
+    obj1 = FastTrajectoryReplanning(tie_break=SMALL_G_VALUE)
+    obj1.run(start = (0, 0), goal = (3,3))
+    # obj2 = FastTrajectoryReplanning(tie_break=LARGE_G_VALUE)
+    # obj2.run(start = (0, 0), goal = (3,3))
