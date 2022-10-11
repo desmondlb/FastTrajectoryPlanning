@@ -1,5 +1,4 @@
 from config import *
-import numpy as np
 from matplotlib import pyplot
 
 class Node():
@@ -121,14 +120,6 @@ class FastTrajectoryReplanning():
 
         return current_legal_moves
 
-
-    # def perform_move(self, move, current_position) -> tuple:
-    #     '''
-    #         This function performs the selected move on the current_position
-    #         Returns the updated position
-    #     '''
-    #     return tuple(map(sum, zip(move, current_position)))
-
     def check_node_in_open_list(self, child_state) -> bool:
         '''
             This function checks whether a child node is in the open list
@@ -242,11 +233,6 @@ class FastTrajectoryReplanning():
             for j in range(len(self.h_values[0])):
                 self.h_values[i][j] = self.get_manhattan_dist((i,j),goal)
 
-    # def set_g_values(self):
-    #     for i in range(len(self.g_values)):
-    #         for j in range(len(self.g_values[0])):
-    #             self.g_values[i][j] = 0
-
     #function to move agent through the grid; path recorded in travelled_path
     def move_in_real_grid(self, current_state, path) -> list:
         travelled_path = []
@@ -277,9 +263,6 @@ class FastTrajectoryReplanning():
         '''
             This function runs the A* algorithm on the generated grid
         '''
-        # self.tie_breaker_pref = tie_break
-        # self.generate_grid()
-        # planned_dest = self.a_star(self.grid, start, goal)
 
         final_path = []
         final_path.append(start)
@@ -287,7 +270,6 @@ class FastTrajectoryReplanning():
         path_exist = True
 
         self.set_h_values(goal)
-        # self.set_g_values()
 
         while path_exist and not end:
             # Check the surroundings and update the explored grid
@@ -298,10 +280,8 @@ class FastTrajectoryReplanning():
             self.closed_list = []
 
             planned_dest = self.a_star(start, goal)
-            # planned_path = self.run(start=start_state, goal=goal)
             
             if planned_dest.position == goal:
-                # self.print_path(planned_dest)
                 # trace planned path back to the the node after start and make that move
                 travelled_path = self.move_in_real_grid(
                     current_state=start, path=self.print_path(planned_dest))
@@ -309,6 +289,7 @@ class FastTrajectoryReplanning():
                 if(travelled_path and travelled_path[-1] == goal):
                     end = True
                 else:
+                    # Set a new start state as the last node in travelled path
                     start = travelled_path[-1]
                 
                 final_path.extend(travelled_path)
@@ -316,24 +297,8 @@ class FastTrajectoryReplanning():
                 path_exist = False
             
 
-            # if planned_dest.position == goal:
-            #     self.print_path(planned_dest)
-                # trace planned path back to the the node after start and make that move
-                # Update current position if it's not blocked
-                # If blocked then start = current state
-                # Check the surroundings and update the explored grid
-                # Empty open and closed list
-                # Call A* again with the new start state
-
-
-        # elif planned_path.position != start:
-            # Maybe this elif condition is not needed
-            # Encountered a dead end??
-            # Take a new step
-            # Check the surroundings and update the explored grid
-            # Call A* again with the new start state
-            # start = curr.position
         if not path_exist: print("Cannot reach the target")
+
         else:
             print("Number of nodes expanded : " + str(len(self.closed_list)))
             print("Nodes expanded : " + str([n.position for n in self.closed_list]))
@@ -363,7 +328,7 @@ class FastTrajectoryReplanning():
 
 
 if __name__ == "__main__":
-    obj1 = FastTrajectoryReplanning(tie_break=SMALL_G_VALUE)
+    obj1 = FastTrajectoryReplanning(tie_break=LARGE_G_VALUE)
     obj1.run(start = (0, 0), goal = (3,3))
     # obj2 = FastTrajectoryReplanning()
     # obj2.run(start = (0, 0), goal = (3,3), tie_break=LARGE_G_VALUE)
