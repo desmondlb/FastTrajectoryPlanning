@@ -117,13 +117,6 @@ class FastTrajectoryReplanning():
         return current_legal_moves
 
 
-    # def perform_move(self, move, current_position) -> tuple:
-    #     '''
-    #         This function performs the selected move on the current_position
-    #         Returns the updated position
-    #     '''
-    #     return tuple(map(sum, zip(move, current_position)))
-
     def check_node_in_open_list(self, child_state) -> bool:
         '''
             This function checks whether a child node is in the open list
