@@ -1,4 +1,6 @@
 from random import randint
+import json
+import pickle
 
 class Cell():
     def __init__(self) -> None:
@@ -8,8 +10,11 @@ class Cell():
         self.start = (0,0)
         self.grid_val = []
         self.target = (randint(0,self.r),randint(0,self.c))
-        print("Target",self.target)
+        #print("Target",self.target)
         # random target
+
+    def getTarget(self):
+        return self.getTarget
 
     def initialise_grid(self):
         for i in range(0,self.r):
@@ -35,7 +40,7 @@ class Cell():
         return (-1,-1)
 
     def DFS(self,curr_pos):
-        print(curr_pos)
+        #print(curr_pos)
         self.grid_val[curr_pos[0]][curr_pos[1]]=True
         #Marking visited position as true in the grid
  
@@ -73,3 +78,13 @@ if __name__ == "__main__":
     obj.initialise_grid()
     grid = obj.DFS(start)
     print(grid)
+    dictionary = {
+    "start": start,
+    "target": obj.getTarget(),
+    "grid":grid
+    }
+    #pickled_object= pickle.dumps(dictionary)
+    with open("grid.json",'wb') as outfile:
+       pickle.dump(dictionary, outfile)
+    
+
