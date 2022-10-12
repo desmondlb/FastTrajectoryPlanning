@@ -36,6 +36,8 @@ class FastTrajectoryReplanning():
         #--------------------------------------------------------------
         self.tie_breaker_pref = LARGE_G_VALUE
 
+        self.counter_expanded_nodes = 0
+
     
     def print_path(self, current) -> None:
         '''
@@ -70,7 +72,7 @@ class FastTrajectoryReplanning():
         priority_node = self.open_list[0]
 
         for n in self.open_list:
-            if(n.f <= priority_node.f):
+            if(n.f < priority_node.f):
                 priority_node = n
 
         #---------------------------------------------
@@ -90,10 +92,10 @@ class FastTrajectoryReplanning():
 
         for n in llst_nodes_smallest_f:
             if self.tie_breaker_pref==LARGE_G_VALUE:
-                if(n.g >= chosen_node.g):
+                if(n.g > chosen_node.g):
                     chosen_node = n
             else:
-                if(n.g <= chosen_node.g):
+                if(n.g < chosen_node.g):
                     chosen_node = n
 
         return chosen_node
@@ -140,12 +142,7 @@ class FastTrajectoryReplanning():
             if(n.position == child_state.position):
                 return True             
             
-        return False
-
-    def update_h_values(self, g_goal):
-        for i in range(len(self.h_values)):
-            for j in range(len(self.h_values[0])):
-                self.h_values[i][j] = g_goal - self.g_values[i][j]
+        return False              
 
 
     def a_star(self, start, goal) -> Node:
@@ -174,6 +171,9 @@ class FastTrajectoryReplanning():
             # Append the current node to the closed list
             #---------------------------------------------------
             self.closed_list.append(current)
+
+            # self.counter_expanded_nodes += 1
+
             self.g_values[current.position[0]][current.position[1]] = current.g
 
             if current.position == goal:
@@ -224,8 +224,22 @@ class FastTrajectoryReplanning():
         #----------------------------------------------------------------------
         # if not self.open_list: return current
 
-
+        self.counter_expanded_nodes += len(self.closed_list) - 1
         return current
+
+
+    def update_h_values(self, g_goal):
+        for n in self.closed_list:
+            self.h_values[n.position[0]][n.position[1]] = g_goal - self.g_values[
+                n.position[0]][n.position[1]]
+        #     if(n.position == child_state.position):
+        #         return True   
+        # for i in range(len(self.h_values)):
+        #     for j in range(len(self.h_values[0])):
+        #         if(self.explored_grid[i][j] != 1):
+        #             self.h_values[i][j] = g_goal - self.g_values[i][j]
+        #         else:
+        #             self.h_values[i][j] = 'INF'
 
 
     def set_h_values(self, goal):
@@ -272,6 +286,7 @@ class FastTrajectoryReplanning():
         self.set_h_values(goal)
 
         while path_exist and not end:
+            # self.counter_expanded_nodes = 0
             # Check the surroundings and update the explored grid
             self.observe_nearby_cells(current_state=start)
 
@@ -282,6 +297,8 @@ class FastTrajectoryReplanning():
             planned_dest = self.a_star(start, goal)
             
             if planned_dest.position == goal:
+
+                self.update_h_values(planned_dest.g)
                 # trace planned path back to the the node after start and make that move
                 travelled_path = self.move_in_real_grid(
                     current_state=start, path=self.print_path(planned_dest))
@@ -300,8 +317,8 @@ class FastTrajectoryReplanning():
         if not path_exist: print("Cannot reach the target")
 
         else:
-            print("Number of nodes expanded : " + str(len(self.closed_list)))
-            print("Nodes expanded : " + str([n.position for n in self.closed_list]))
+            print("Number of nodes expanded : " + str(self.counter_expanded_nodes))
+            # print("Nodes expanded : " + str([n.position for n in self.closed_list]))
             print(final_path)
             self.temporary_visualize(path=final_path)
 
@@ -315,11 +332,11 @@ class FastTrajectoryReplanning():
         #-----------
         # Dummy grid
         #-----------
-        actual_grid = [[0,0,1,0,0],
-                    [1,0,0,0,0],
-                    [0,1,0,1,0],
-                    [0,0,1,"X",0],
-                    [0,0,0,0,0]]
+        actual_grid = [[0,0,0,0,0],
+                        [0,0,1,0,0],
+                        [0,0,1,0,0],
+                        [0,0,1,0,0],
+                        [0,0,0,1,"X"]]
 
         explored_grid = [[0]*len(actual_grid) for _ in range(len(actual_grid))]
 
@@ -329,6 +346,6 @@ class FastTrajectoryReplanning():
 
 if __name__ == "__main__":
     obj1 = FastTrajectoryReplanning(tie_break=LARGE_G_VALUE)
-    obj1.run(start = (0, 0), goal = (3,3))
+    obj1.run(start = (4, 2), goal = (4,4))
     # obj2 = FastTrajectoryReplanning()
     # obj2.run(start = (0, 0), goal = (3,3), tie_break=LARGE_G_VALUE)
