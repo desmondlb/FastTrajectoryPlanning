@@ -12,7 +12,7 @@ class Cell():
         self.c= 101
         self.grid_val = []
         self.start = (randint(0,19),randint(0,19))
-        self.target = (randint(80,100),randint(0,19))
+        self.target = (randint(80,100),randint(80,100))
         #print("Target",self.target)
         # random target
 
@@ -63,19 +63,10 @@ class Cell():
                     #print(self.valid_move((curr_pos[0],cell_y)))
                     #print(self.unvisited(self.grid_val,self.r,self.c)!=(-1,-1))
                     if(self.valid_move((cell_x,curr_pos[1])) and self.grid[cell_x][curr_pos[1]] !=1 and self.grid_val[cell_x][curr_pos[1]]==False and (cell_x,curr_pos[1])!= self.target): #Condition for cell move is valid and not visited
-                        # number = randint(1,100) 
-                        # if(number<=30):
                         self.grid[cell_x][curr_pos[1]] = 1 if random.random() < 0.2 else 0
-                        # else:
-                        #     self.grid[cell_x][curr_pos[1]] = 0
                         stack.append((cell_x,curr_pos[1]))
                         #self.DFS((cell_x,curr_pos[1])) #Call from neighbour cell to DFS
                     elif(self.valid_move((curr_pos[0],cell_y)) and self.grid[curr_pos[0]][cell_y] !=1 and self.grid_val[curr_pos[0]][cell_y]==False and (curr_pos[0],cell_y)!=self.target): #Condition for cell move is valid and not visited
-                        # number = randint(1,100)
-                        # if(number<=30):
-                        #     self.grid[curr_pos[0]][cell_y] = 1
-                        # else:
-                        #     self.grid[curr_pos[0]][cell_y] = 0
                         self.grid[curr_pos[0]][cell_y] = 1 if random.random() < 0.2 else 0
                         stack.append((curr_pos[0],cell_y))
                         #self.DFS((curr_pos[0],cell_y))
