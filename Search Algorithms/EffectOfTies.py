@@ -33,15 +33,13 @@ class FastTrajectoryReplanning():
         # Used to break ties in favour of either large or small g value
         #--------------------------------------------------------------
         self.tie_breaker_pref = tie_break
+        
         with open('grid.json', 'rb') as openfile:
             # Reading from json file
             json_object = pickle.load(openfile)
 
         self.counter_expanded_nodes = 0
 
-        with open('grid.json', 'rb') as openfile:
-            # Reading from json file
-            json_object = pickle.load(openfile)
 
     
     def print_path(self, current) -> None:
