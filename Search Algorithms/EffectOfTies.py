@@ -1,3 +1,4 @@
+import pickle
 from config import *
 from matplotlib import pyplot
 
@@ -36,6 +37,12 @@ class FastTrajectoryReplanning():
             # Reading from json file
             json_object = pickle.load(openfile)
 
+        self.counter_expanded_nodes = 0
+
+        with open('grid.json', 'rb') as openfile:
+            # Reading from json file
+            json_object = pickle.load(openfile)
+
     
     def print_path(self, current) -> None:
         '''
@@ -69,7 +76,7 @@ class FastTrajectoryReplanning():
         priority_node = self.open_list[0]
 
         for n in self.open_list:
-            if(n.f <= priority_node.f):
+            if(n.f < priority_node.f):
                 priority_node = n
 
         #---------------------------------------------
@@ -89,10 +96,10 @@ class FastTrajectoryReplanning():
 
         for n in llst_nodes_smallest_f:
             if self.tie_breaker_pref==LARGE_G_VALUE:
-                if(n.g >= chosen_node.g):
+                if(n.g > chosen_node.g):
                     chosen_node = n
             else:
-                if(n.g <= chosen_node.g):
+                if(n.g < chosen_node.g):
                     chosen_node = n
 
         return chosen_node
@@ -169,6 +176,8 @@ class FastTrajectoryReplanning():
             #---------------------------------------------------
             self.closed_list.append(current)
 
+            
+
             if current.position == goal:
                 break
 
@@ -215,7 +224,7 @@ class FastTrajectoryReplanning():
         #----------------------------------------------------------------------
         # if not self.open_list: return current
 
-
+        self.counter_expanded_nodes += len(self.closed_list) - 1
         return current
             
 
@@ -255,6 +264,11 @@ class FastTrajectoryReplanning():
         path_exist = True
 
         while path_exist and not end:
+            
+            # self.counter_expanded_nodes = 0
+            
+            # print(self.closed_list)
+            # print(self.counter_expanded_nodes)
             # Check the surroundings and update the explored grid
             self.observe_nearby_cells(current_state=start)
 
@@ -284,8 +298,8 @@ class FastTrajectoryReplanning():
         if not path_exist: print("Cannot reach the target")
 
         else:
-            print("Number of nodes expanded : " + str(len(self.closed_list)))
-            print("Nodes expanded : " + str([n.position for n in self.closed_list]))
+            print("Number of nodes expanded : " + str(self.counter_expanded_nodes))
+            # print("Nodes expanded : " + str([n.position for n in self.closed_list]))
             print(final_path)
             self.temporary_visualize(path=final_path)
 
@@ -299,11 +313,23 @@ class FastTrajectoryReplanning():
         #-----------
         # Dummy grid
         #-----------
-        actual_grid = [[0,0,1,0,0],
-                    [0,0,1,0,0],
-                    [0,0,0,1,0],
-                    [0,0,1,"X",0],
-                    [0,0,0,0,0]]
+        # actual_grid = [[0,0,0,0,0],
+        #                 [0,0,0,0,0],
+        #                 [0,0,0,0,0],
+        #                 [0,0,0,0,0],
+        #                 [0,0,0,0,"X"]]
+
+        # actual_grid = [[0,0,1,0,0],
+        #                 [0,0,1,0,0],
+        #                 [0,0,0,1,0],
+        #                 [0,0,1,"X",0],
+        #                 [0,0,0,0,0]]
+
+        actual_grid = [[0,0,0,0,0],
+                        [0,0,1,0,0],
+                        [0,0,1,0,0],
+                        [0,0,1,0,0],
+                        [0,0,0,1,"X"]]
 
         explored_grid = [[0]*len(actual_grid) for _ in range(len(actual_grid))]
 
@@ -312,7 +338,7 @@ class FastTrajectoryReplanning():
 
 
 if __name__ == "__main__":
-    obj1 = FastTrajectoryReplanning(tie_break=SMALL_G_VALUE)
-    obj1.run(start = (0, 0), goal = (3,3))
-    # obj2 = FastTrajectoryReplanning(tie_break=LARGE_G_VALUE)
-    # obj2.run(start = (0, 0), goal = (3,3))
+    # obj1 = FastTrajectoryReplanning(tie_break=SMALL_G_VALUE)
+    # obj1.run(start = (0, 0), goal = (4,4))
+    obj2 = FastTrajectoryReplanning(tie_break=LARGE_G_VALUE)
+    obj2.run(start = (4, 2), goal = (4,4))
