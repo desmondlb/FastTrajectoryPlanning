@@ -1,4 +1,4 @@
-import pickle
+import json
 from config import *
 from matplotlib import pyplot
 
@@ -22,7 +22,7 @@ class FastTrajectoryReplanning():
     def __init__(self, tie_break = LARGE_G_VALUE) -> None:
         self.open_list = []
         self.closed_list = []
-        self.actual_grid, self.explored_grid = self.generate_grid()
+        # self.actual_grid, self.explored_grid = self.generate_grid()
 
         #-----------------------------------
         # Valid moves: up, down, left, right
@@ -33,10 +33,18 @@ class FastTrajectoryReplanning():
         # Used to break ties in favour of either large or small g value
         #--------------------------------------------------------------
         self.tie_breaker_pref = tie_break
+        self.grid_worlds = None
+        with open('Gridworlds/grid.json', 'r') as f:
+            # Reading from json file
+            self.grid_worlds = json.load(f)
+            
+        self.grid_world = None
 
-        # with open('grid.json', 'rb') as openfile:
-        #     # Reading from json file
-        #     json_object = pickle.load(openfile)
+        self.start = None
+        self.target = None
+        self.actual_grid = None
+
+        self.explored_grid = None
 
         self.counter_expanded_nodes = 0
 
@@ -252,14 +260,17 @@ class FastTrajectoryReplanning():
         pyplot.imshow(self.actual_grid)
         pyplot.show()
 
-    def run(self, start=None, goal=None) -> None:
+    def run(self, grid_index = 0) -> None:
         '''
             This function runs the A* algorithm on the generated grid
         '''
+        self.generate_grid(grid_index)
         final_path = []
-        final_path.append(start)
+        final_path.append(self.start)
         end = False
         path_exist = True
+        # start = self.start
+        # goal = self.target
 
         while path_exist and not end:
             
@@ -268,25 +279,25 @@ class FastTrajectoryReplanning():
             # print(self.closed_list)
             # print(self.counter_expanded_nodes)
             # Check the surroundings and update the explored grid
-            self.observe_nearby_cells(current_state=start)
+            self.observe_nearby_cells(current_state=self.start)
 
             # Empty open and closed list
             self.open_list = []
             self.closed_list = []
 
-            planned_dest = self.a_star(start, goal)
+            planned_dest = self.a_star(self.start, self.target)
             
-            if planned_dest.position == goal:
+            if planned_dest.position == self.target:
 
                 # trace planned path back to the the node after start and make that move
                 travelled_path = self.move_in_real_grid(
-                    current_state=start, path=self.print_path(planned_dest))
+                    current_state=self.start, path=self.print_path(planned_dest))
 
-                if(travelled_path and travelled_path[-1] == goal):
+                if(travelled_path and travelled_path[-1] == self.target):
                     end = True
                 else:
                     # Set a new start state as the last node in travelled path
-                    start = travelled_path[-1]
+                    self.start = travelled_path[-1]
                 
                 final_path.extend(travelled_path)
             else:
@@ -298,16 +309,25 @@ class FastTrajectoryReplanning():
         else:
             print("Number of nodes expanded : " + str(self.counter_expanded_nodes))
             # print("Nodes expanded : " + str([n.position for n in self.closed_list]))
-            print(final_path)
+            # print(final_path)
             self.temporary_visualize(path=final_path)
 
-    def generate_grid(self) -> None:
+    def generate_grid(self, grid_index) -> None:
         '''
             This function generates N*N grid with the following properties
                 1. Obstacles generated with 30% probability to construct a maze like structure
                 2. Target position denoted with "X"
                 3. Obstacles denoted with 1
         '''
+        
+        self.grid_world = self.grid_worlds.get(str(grid_index))
+
+        self.start = tuple(self.grid_world.get("Start"))
+        self.target = tuple(self.grid_world.get("Target"))
+        self.actual_grid = self.grid_world.get("Grid")
+
+        self.explored_grid = [[0]*len(self.actual_grid) for _ in range(len(self.actual_grid))]
+
         #-----------
         # Dummy grid
         #-----------
@@ -323,15 +343,15 @@ class FastTrajectoryReplanning():
         #                 [0,0,1,"X",0],
         #                 [0,0,0,0,0]]
 
-        actual_grid = [[0,0,0,0,0],
-                        [0,0,1,0,0],
-                        [0,0,1,0,0],
-                        [0,0,1,0,0],
-                        [0,0,0,1,"X"]]
+        # actual_grid = [[0,0,0,0,0],
+        #                 [0,0,1,0,0],
+        #                 [0,0,1,0,0],
+        #                 [0,0,1,0,0],
+        #                 [0,0,0,1,"X"]]
 
-        explored_grid = [[0]*len(actual_grid) for _ in range(len(actual_grid))]
+        # explored_grid = [[0]*len(actual_grid) for _ in range(len(actual_grid))]
 
-        return actual_grid, explored_grid
+        # return actual_grid, explored_grid
 
 
 
@@ -339,4 +359,7 @@ if __name__ == "__main__":
     # obj1 = FastTrajectoryReplanning(tie_break=SMALL_G_VALUE)
     # obj1.run(start = (0, 0), goal = (4,4))
     obj2 = FastTrajectoryReplanning(tie_break=LARGE_G_VALUE)
-    obj2.run(start = (4, 2), goal = (4,4))
+
+    for i in range(10):
+        obj2.run(grid_index=i)
+        obj2.counter_expanded_nodes = 0
