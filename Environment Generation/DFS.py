@@ -96,7 +96,7 @@ if __name__ == "__main__":
         "Grid":grid
         }
     #pickled_object= pickle.dumps(dictionary)
-    with open("Gridworlds/grid.json",'w+') as f:
+    with open("Gridworlds/gridworlds.json",'w+') as f:
        json.dump(dictionary, f)
     
 

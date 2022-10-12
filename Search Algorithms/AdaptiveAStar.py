@@ -38,7 +38,7 @@ class FastTrajectoryReplanning():
         self.tie_breaker_pref = tie_break
 
         self.grid_worlds = None
-        with open('Gridworlds/grid.json', 'r') as f:
+        with open('Gridworlds/gridworlds.json', 'r') as f:
             # Reading from json file
             self.grid_worlds = json.load(f)
             
