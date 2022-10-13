@@ -46,6 +46,8 @@ class FastTrajectoryReplanning():
 
         self.explored_grid = None
 
+        self.g_values = None
+
         self.counter_expanded_nodes = 0
 
 
@@ -160,7 +162,7 @@ class FastTrajectoryReplanning():
             Implementation of the simple A* algorithm
         '''
         start_node = Node(position=start)
-        start_node.g = 0
+        start_node.g = self.g_values[start[0]][start[1]]
         self.open_list.append(start_node)
         current = start_node
 
@@ -177,15 +179,18 @@ class FastTrajectoryReplanning():
             # Popping the node from the open list
             #------------------------------------
             self.open_list.remove(current)
+
+            if current.position == goal:
+                break
             #---------------------------------------------------
             # Append the current node to the closed list
             #---------------------------------------------------
             self.closed_list.append(current)
 
             
+            self.g_values[current.position[0]][current.position[1]] = current.g
 
-            if current.position == goal:
-                break
+            
 
             moves = self.get_valid_moves(current.position)
 
@@ -230,7 +235,7 @@ class FastTrajectoryReplanning():
         #----------------------------------------------------------------------
         # if not self.open_list: return current
 
-        self.counter_expanded_nodes += len(self.closed_list) - 1
+        self.counter_expanded_nodes += len(self.closed_list)
         return current
             
 
@@ -267,6 +272,7 @@ class FastTrajectoryReplanning():
         self.generate_grid(grid_index)
         final_path = []
         final_path.append(self.start)
+        
         end = False
         path_exist = True
         # start = self.start
@@ -304,13 +310,13 @@ class FastTrajectoryReplanning():
                 path_exist = False
     
 
-        if not path_exist: print("Cannot reach the target")
+        if not path_exist: print("Cannot reach the target, nodes expanded : " + str(self.counter_expanded_nodes))
 
         else:
             print("Number of nodes expanded : " + str(self.counter_expanded_nodes))
             # print("Nodes expanded : " + str([n.position for n in self.closed_list]))
             # print(final_path)
-            self.temporary_visualize(path=final_path)
+            # self.temporary_visualize(path=final_path)
 
     def generate_grid(self, grid_index) -> None:
         '''
@@ -326,7 +332,17 @@ class FastTrajectoryReplanning():
         self.target = tuple(self.grid_world.get("Target"))
         self.actual_grid = self.grid_world.get("Grid")
 
+        self.start = (4,2)
+        self.target = (4,4)
+        self.actual_grid = [[0,0,0,0,0],
+                        [0,0,0,0,0],
+                        [0,0,1,0,0],
+                        [0,0,1,0,0],
+                        [0,0,0,1,"X"]]
+
         self.explored_grid = [[0]*len(self.actual_grid) for _ in range(len(self.actual_grid))]
+
+        self.g_values = [[0]*len(self.actual_grid) for _ in range(len(self.actual_grid))]
 
         #-----------
         # Dummy grid
@@ -356,10 +372,10 @@ class FastTrajectoryReplanning():
 
 
 if __name__ == "__main__":
-    # obj1 = FastTrajectoryReplanning(tie_break=SMALL_G_VALUE)
-    # obj1.run(start = (0, 0), goal = (4,4))
-    obj2 = FastTrajectoryReplanning(tie_break=LARGE_G_VALUE)
+    obj1 = FastTrajectoryReplanning(tie_break=LARGE_G_VALUE)
+    obj1.run()
+    # obj2 = FastTrajectoryReplanning(tie_break=LARGE_G_VALUE)
 
-    for i in range(10):
-        obj2.run(grid_index=i)
-        obj2.counter_expanded_nodes = 0
+    # for i in range(0, 10):
+    #     obj2.run(grid_index=i)
+    #     obj2.counter_expanded_nodes = 0
