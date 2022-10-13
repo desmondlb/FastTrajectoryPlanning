@@ -300,7 +300,6 @@ class FastTrajectoryReplanning():
         self.set_h_values(self.target)
 
         while path_exist and not end:
-            # self.counter_expanded_nodes = 0
             # Check the surroundings and update the explored grid
             self.observe_nearby_cells(current_state=self.start)
 

@@ -11,8 +11,8 @@ class Cell():
         self.r = 101
         self.c= 101
         self.grid_val = []
-        self.start = (randint(0,19),randint(0,19))
-        self.target = (randint(80,100),randint(80,100))
+        self.start = (randint(0,int(0.2*self.r)),randint(0,int(0.2*self.c)))
+        self.target = (randint(int(0.8*self.r),self.r-1),randint(int(0.2*self.c),self.c -1))
         #print("Target",self.target)
         # random target
 
