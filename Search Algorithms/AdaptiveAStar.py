@@ -258,12 +258,21 @@ class FTRAdaptive():
             if self.actual_grid[cell[0]][cell[1]] == 1 and self.explored_grid[cell[0]][cell[1]] == 0:
                 self.explored_grid[cell[0]][cell[1]] = 1
 
-    def visualize(self, path):
+    def animate_path(self, path):
         '''
             function to visualize the final path taken by the agent in the grid
         '''
         ani = AnimatePath(grid=self.actual_grid, path=path, start=self.start, target=self.target)
         ani.show_path()
+
+    def visualize(self, path):
+        for point in path:
+            self.actual_grid[point[0]][point[1]] = 4
+        self.actual_grid[self.start[0]][self.start[1]] = 3
+        self.actual_grid[self.target[0]][self.target[1]] = 5
+
+        pyplot.imshow(self.actual_grid, cmap="RdBu")
+        pyplot.show()
 
     def run(self, grid_index=0) -> None:
         '''
@@ -324,6 +333,7 @@ class FTRAdaptive():
         else:
             print("Number of nodes expanded : " + str(self.counter_expanded_nodes))
             #print(len(final_path))
+            #self.animate_path(path=final_path)  #uncomment to animate final path
             #self.visualize(path=final_path)    #uncomment to visualize final path
 
     def generate_grid(self, grid_index) -> None:
