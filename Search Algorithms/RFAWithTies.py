@@ -1,10 +1,8 @@
 import json
-import time
 from config import *
 from matplotlib import pyplot
 import heapq as hp  #MISSION_HEAP
 import itertools    #MISSION_HEAP
-from AdaptiveAStar import FTRAdaptive
 
 
 class Node():
@@ -29,7 +27,6 @@ class RFAWithTies():
         self.open_list = []             # binary heap which sorts nodes according to least f,g, or h values
         self.closed_list = []           # list with expanded nodes
         self.open_list_dict = dict()    # connects node objects to the binary heap
-        # self.actual_grid, self.explored_grid = self.generate_grid()
 
         # -----------------------------------
         # Valid moves: up, down, left, right
@@ -52,8 +49,6 @@ class RFAWithTies():
         self.actual_grid = None
 
         self.explored_grid = None
-
-        self.g_values = None
 
         self.counter_expanded_nodes = 0
         
@@ -152,8 +147,11 @@ class RFAWithTies():
         
 
     #MISSION_HEAP  
-    # pushes new node onto the open_list heap and dictionary
+
     def open_list_push(self, node) -> Node:
+        '''
+            pushes new node onto the open_list heap and dictionary
+        '''
         if self.tie_breaker_pref == LARGE_G_VALUE:
             hp.heappush(self.open_list, (node.f, node.h, next(self.counter), node.position))
         else:
@@ -233,7 +231,7 @@ class RFAWithTies():
 
     def move_in_real_grid(self, path) -> list:
         '''
-            function to move agent through the grid; path recorded in travelled_path
+            uses get_valid_moves() to update agent's memory
         '''
         travelled_path = []
         for cell in path:

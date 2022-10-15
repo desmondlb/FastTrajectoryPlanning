@@ -25,7 +25,6 @@ class FTRAdaptive():
         self.open_list = []
         self.closed_list = []
         self.open_list_dict = dict()
-        # self.actual_grid, self.explored_grid = self.generate_grid()
 
         #-----------------------------------
         # Valid moves: up, down, left, right
@@ -33,7 +32,6 @@ class FTRAdaptive():
         self.valid_moves = [(0, 1), (0, -1), (-1, 0), (1, 0)]
 
         self.h_values = None
-        self.g_values = None
 
         #--------------------------------------------------------------
         # Used to break ties in favour of either large or small g value
@@ -55,13 +53,12 @@ class FTRAdaptive():
 
         self.counter_expanded_nodes = 0
 
-        #use counter to resolve ties
         self.counter = itertools.count()    #MISSION_HEAP
 
     
     def print_path(self, current) -> None:
         '''
-            This function prints a list of positions that
+            This function returns a list of positions that
             the agent travels to get from start to the goal state.
         '''
         path = []
@@ -69,7 +66,6 @@ class FTRAdaptive():
             path.append(current.position)
             current = current.parent
         
-        # print(path[::-1])
         return path[::-1]
         
     def get_manhattan_dist(self, start, goal) -> int:
@@ -92,85 +88,15 @@ class FTRAdaptive():
         f, t, c, chosen_position = hp.heappop(self.open_list)   #MISSION_HEAP t= tie-breaker
 
         ##############MISSION_HEAP#######################
-        '''
-        llst_nodes_smallest_f = []
-        priority_node = self.open_list[0]
-
-        for n in self.open_list:
-            if (n.f < priority_node.f):
-                priority_node = n
-
-        # ---------------------------------------------
-        # Push all the nodes with the smallest f value
-        # ---------------------------------------------
-        for n in self.open_list:
-            if (n.f == priority_node.f):
-                llst_nodes_smallest_f.append(n)
-
-        if len(llst_nodes_smallest_f) == 1:
-            return llst_nodes_smallest_f[0]
-
-        # -------------------------------------------
-        # Break ties in favour of the set preference
-        # -------------------------------------------
-        chosen_node = llst_nodes_smallest_f[0]
-
-        for n in llst_nodes_smallest_f:
-            if self.tie_breaker_pref == LARGE_G_VALUE:
-                if (n.g > chosen_node.g):
-                    chosen_node = n
-            else:
-                if (n.g < chosen_node.g):
-                    chosen_node = n
-        '''
 
         return f, t, c, chosen_position
     
-    # def get_priority_node(self) -> Node:
-    #     '''
-    #         This function returns the node with the least f value
-    #         from the Open list
-    #         TBD: Implementation with priority heap/queue
 
-    #         This function also implements the effect of ties
-    #         i.e. It breaks the ties in favour of 
-    #     '''
-    #     llst_nodes_smallest_f = []
-    #     priority_node = self.open_list[0]
-
-    #     for n in self.open_list:
-    #         if(n.f < priority_node.f):
-    #             priority_node = n
-
-    #     #---------------------------------------------
-    #     # Push all the nodes with the smallest f value
-    #     #---------------------------------------------
-    #     for n in self.open_list:
-    #         if(n.f == priority_node.f):
-    #             llst_nodes_smallest_f.append(n)
-
-    #     if len(llst_nodes_smallest_f)==1:
-    #         return llst_nodes_smallest_f[0]
-
-    #     #-------------------------------------------
-    #     # Break ties in favour of the set preference
-    #     #-------------------------------------------
-    #     chosen_node = llst_nodes_smallest_f[0]
-
-    #     for n in llst_nodes_smallest_f:
-    #         if self.tie_breaker_pref==LARGE_G_VALUE:
-    #             if(n.g > chosen_node.g):
-    #                 chosen_node = n
-    #         else:
-    #             if(n.g < chosen_node.g):
-    #                 chosen_node = n
-
-    #     return chosen_node
 
     def get_valid_moves(self, current) -> list:
         '''
             Here we check the following
-                1. Does the node lie within grid boundaries
+                1. Does the node lie within grid boundaries?
                 2. Is there an obstacle?
         '''
         current_legal_moves = []
@@ -189,84 +115,32 @@ class FTRAdaptive():
 
         return current_legal_moves
 
-    # def check_node_in_open_list(self, child_state) -> None:
-    #     '''
-    #         This function checks whether a child node is in the open list
-    #         and whether it has a better f value
-    #     '''
-    #     # for n in self.open_list:
-    #     #     if(n.position == child_state.position):
-    #     #         return True             
-            
-    #     # return False
 
-    #     idx = -1
-    #     for n in self.open_list:
-    #         if(n.position == child_state.position):
-    #             idx = 1
-    #         # if child_state in self.open_list: 
-    #             # idx = self.open_list.index(n) 
-    #             if child_state.g < n.g:
-    #                 # update the node in the open list
-    #                 n.g = child_state.g
-    #                 n.f = child_state.f
-    #                 n.h = child_state.h
-    #                 n.parent = child_state.parent
-    #         # else:
-    #             # Add the child to the open list
-    #     if idx==-1:
-    #         self.open_list.append(child_state)
-
-    def check_node_in_open_list(self, child_state) -> bool:
+    def check_and_update_node_in_open_list(self, child_state) -> None:
         '''
             This function checks whether a child node is in the open list
             and whether it has a better f value
+            It also adds the node to the open list if it's not already there
         '''
-        idx = -1
         existing_node = self.open_list_dict.get(child_state.position)   #MISSION_HEAP
+
         if existing_node:
-            idx = 1
-            if child_state.g < existing_node.g:
-                #update the node in the open list
+
+            if child_state.f < existing_node.f:
+                #---------------------------------
+                # update the node in the open list
+                #---------------------------------
                 existing_node.g = child_state.g
                 existing_node.h = child_state.h
                 existing_node.f = child_state.f
                 existing_node.parent = child_state.parent
         
-        if idx == -1:
-            self.open_list_push(child_state)
+        else: self.open_list_push(child_state)
         
-        '''
-        #MISSION_HEAP
-        
-        for n in self.open_list:
-            if (n[3].position == child_state.position):
-                idx = 1
-                # if child_state in self.open_list:
-                # idx = self.open_list.index(n)
-                if child_state.g < n[3].g:
-                    # update the node in the open list
-                    n[3].g = child_state.g
-                    n[3].f = child_state.f
-                    n[3].h = child_state.h
-                    n.g = child_state.g
-                    n.f = child_state.f
-                    n.h = child_state.h
-            # else:
-            # Add the child to the open list
-        if idx == -1:
-            #self.open_list.append(child_state)
-            self.open_list_push(child_state)
-        '''
-            #  and child_state.g > n.g):
-            # return True
-
-        # return False
 
     def check_node_in_closed_list(self, child_state) -> bool:
         '''
             This function checks whether a child node is in the closed list
-            and whether it has a better f value
         '''
         for n in self.closed_list:
             if(n.position == child_state.position):
@@ -275,53 +149,46 @@ class FTRAdaptive():
         return False              
 
 
-    #MISSION_HEAP  
-    # pushes new node onto the open_list heap and dictionary
-    def open_list_push(self, node) -> Node:     
+    #MISSION_HEAP
+    def open_list_push(self, node) -> Node:
+        '''
+            pushes new node onto the open_list heap and dictionary
+        '''
         if self.tie_breaker_pref == LARGE_G_VALUE:
             hp.heappush(self.open_list, (node.f, node.h, next(self.counter), node.position))
         else:
             hp.heappush(self.open_list, (node.f, node.g, next(self.counter), node.position))
         self.open_list_dict[node.position] = node
 
-    def a_star(self, start, goal) -> Node:
+    def a_star(self, start_node, goal) -> Node:
         '''
             Implementation of the simple A* algorithm
         '''
-        start_node = Node(position=start)
-        start_node.g = 0
         self.open_list_push(start_node)  #MISSION_HEAP
-        # self.open_list.append(start_node)
         current = start_node
 
         while(self.open_list != []):
             
-            #---------------------------------------------
+            # ---------------------------------------------
             # Calculate the h and f values of Current node
-            #---------------------------------------------
+            # ---------------------------------------------
             f_value, tie_break, c, cell = self.open_list_pop()  #MISSION_HEAP
             current = self.open_list_dict[cell]
             current.h = self.h_values[current.position[0]][current.position[1]]
             current.f = current.g + current.h
             
-            #------------------------------------
+            # ------------------------------------
             # Popping the node from the open list
-            #------------------------------------
-            # self.open_list.remove(current)
+            # ------------------------------------
             del self.open_list_dict[cell]  #MISSION_HEAP
 
             if current.position == goal:
                 break
-            #---------------------------------------------------
+            # ---------------------------------------------------
             # Append the current node to the closed list
-            #---------------------------------------------------
+            # ---------------------------------------------------
             self.closed_list.append(current)
 
-            # self.g_values[current.position[0]][current.position[1]] = current.g
-            
-            #--------------------------------------
-            # Get valid moves for the explored grid
-            #--------------------------------------
             moves = self.get_valid_moves(current.position)
 
             for move in moves:
@@ -339,52 +206,49 @@ class FTRAdaptive():
                     child_state.position, current.position)
                 child_state.f = child_state.g + child_state.h
 
-                #------------------------------------------------
+                # ------------------------------------------------
                 # If the node is already in closed list then skip
-                #------------------------------------------------
+                # ------------------------------------------------
                 if self.check_node_in_closed_list(child_state):
                     continue
                 
-                #----------------------------------------------
-                # If the node is already in open list then skip
-                #----------------------------------------------
-                # Update the priority? (TBD)
-                # if self.check_node_in_open_list(child_state):
-                #     continue
-                # for n in self.open_list:
-                #     if(n.position == child_state.position and child_state.g > n.g):
-                #         continue
-
-                self.check_node_in_open_list(child_state)
-                
-                #-----------------------------------------
-                # Else add the child node to the open list
-                #-----------------------------------------
-                # else:
-                # self.open_list.append(child_state)
+                # ----------------------------------------------
+                # If the node is already in open list then update the node
+                # depending on the g value Else push the node in the open list
+                # ----------------------------------------------
+                self.check_and_update_node_in_open_list(child_state)
 
         
-        #----------------------------------------------------------------------
+        # ----------------------------------------------------------------------
         # If open list is empty in the end then return current to indicate no path
-        #----------------------------------------------------------------------
-        # if not self.open_list: return current
+        # ----------------------------------------------------------------------
 
         self.counter_expanded_nodes += len(self.closed_list)
         return current
 
 
-    def update_h_values(self, g_goal):
+    def update_h_values(self, g_goal) -> None:
+        '''
+            Updates the states in closed list using the better heuristic
+            h(s) = g(s_goal) - g(s)
+        '''
         for n in self.closed_list:
             self.h_values[n.position[0]][n.position[1]] = g_goal - n.g
 
 
-    def set_h_values(self, goal):
+    def set_h_values(self, goal) -> None:
+        '''
+            Sets the heuristic array to the manhattan distances
+        '''
         for i in range(len(self.h_values)):
             for j in range(len(self.h_values[0])):
                 self.h_values[i][j] = self.get_manhattan_dist((i,j),goal)
 
-    #function to move agent through the grid; path recorded in travelled_path
+
     def move_in_real_grid(self, path) -> list:
+        '''
+            uses get_valid_moves() to update agent's memory
+        '''
         travelled_path = []
         for cell in path:
             if self.actual_grid[cell[0]][cell[1]] != 1:
@@ -394,16 +258,21 @@ class FTRAdaptive():
                 break
         return travelled_path
     
-    #uses get_valid_moves() to update agent's memory
+
     def observe_nearby_cells(self, current_state) -> None:
+        '''
+            uses get_valid_moves() to update agent's memory
+        '''
         field_of_view = self.get_valid_moves(current=current_state)
         for cell in field_of_view:
             if self.actual_grid[cell[0]][cell[1]] == 1 and self.explored_grid[cell[0]][cell[1]] == 0:
                 self.explored_grid[cell[0]][cell[1]] = 1
 
 
-    #function to visualize the final path taken by the agent in the grid (needs tweaking)
     def temporary_visualize(self, path):
+        '''
+            function to visualize the final path taken by the agent in the grid (needs tweaking)
+        '''
         for point in path:
             self.actual_grid[point[0]][point[1]] = 0.5
         pyplot.imshow(self.actual_grid)
@@ -418,53 +287,66 @@ class FTRAdaptive():
         final_path.append(self.start)
         end = False
         path_exist = True
-        counter = 0
-        self.set_h_values(self.target)
+
+        start_node = Node(position=self.start)
 
         while path_exist and not end:
+            # ---------------------------------------------------
             # Check the surroundings and update the explored grid
+            # ---------------------------------------------------
             self.observe_nearby_cells(current_state=self.start)
 
+            # ----------------------------------------------
             # Empty open and closed list
+            # ----------------------------------------------
             self.open_list = []
             self.closed_list = []
             self.open_list_dict.clear()
 
-            planned_dest = self.a_star(self.start, self.target)
+            planned_dest = self.a_star(start_node, self.target)
             
             if planned_dest.position == self.target:
-                counter += 1
 
+                # ---------------------------------------------------------------
+                # Update the h values of the states in the closed list
+                # ---------------------------------------------------------------
                 self.update_h_values(planned_dest.g)
-                # trace planned path back to the the node after start and make that move
-                path = self.print_path(planned_dest)
-                travelled_path = self.move_in_real_grid(path=path)
+
+                # ---------------------------------------------------------------
+                # Make agent move along the planned path till it hits an obstacle
+                # ---------------------------------------------------------------
+                travelled_path = self.move_in_real_grid(path=self.print_path(planned_dest))
 
                 if(travelled_path and travelled_path[-1] == self.target):
                     end = True
                 else:
+                    # --------------------------------------------------------
                     # Set a new start state as the last node in travelled path
-                    self.start = travelled_path[-1]
+                    # --------------------------------------------------------
+                    for n in self.closed_list:
+                        if (n.position == travelled_path[-1]):
+                            start_node = n
                 
                 final_path.extend(travelled_path)
             else:
                 path_exist = False
             
 
-        if not path_exist: 
+        if not path_exist:
             print("Cannot reach the target, nodes expanded : " + str(self.counter_expanded_nodes))
-            # print(len(final_path))
 
         else:
             print("Number of nodes expanded : " + str(self.counter_expanded_nodes))
-            # print(len(final_path))
-            # self.temporary_visualize(path=final_path)
+            print(len(final_path))
+            self.temporary_visualize(path=final_path)
+
 
     def generate_grid(self, grid_index) -> None:
         '''
             This function generates N*N grid with the following properties
                 1. Obstacles generated with 30% probability to construct a maze like structure
-                2. Target position denoted with "X"
+                2. Target position generated in the lower right corner of the maze
+                3. Agent position generated in the upper right corner of the maze
                 3. Obstacles denoted with 1
         '''
         self.grid_world = self.grid_worlds.get(str(grid_index))
@@ -473,6 +355,7 @@ class FTRAdaptive():
         self.target = tuple(self.grid_world.get("Target"))
         self.actual_grid = self.grid_world.get("Grid")
 
+        # Dummy Test Case
         # self.start = (4,2)
         # self.target = (4,4)
         # self.actual_grid = [[0,0,0,0,0],
@@ -484,13 +367,10 @@ class FTRAdaptive():
         self.explored_grid = [[0]*len(self.actual_grid) for _ in range(len(self.actual_grid))]
 
         self.h_values = [[0]*len(self.actual_grid) for _ in range(len(self.actual_grid))]
+        self.set_h_values(self.target)
 
 
 if __name__ == "__main__":
     obj1 = FTRAdaptive(tie_break=LARGE_G_VALUE)
-    for i in range(0, 20):
-        obj1.run(grid_index=i)
-        obj1.counter_expanded_nodes = 0
-
-    # obj2 = FastTrajectoryReplanning(tie_break=LARGE_G_VALUE)
-    # obj1.run()
+    obj1.run(grid_index=2)
+    obj1.counter_expanded_nodes = 0
