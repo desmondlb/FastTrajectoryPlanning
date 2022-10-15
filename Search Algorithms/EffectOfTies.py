@@ -135,16 +135,30 @@ class FastTrajectoryReplanning():
         return current_legal_moves
 
 
-    def check_node_in_open_list(self, child_state) -> bool:
+    def check_node_in_open_list(self, child_state) -> None:
         '''
             This function checks whether a child node is in the open list
             and whether it has a better f value
         '''
+        idx = -1
         for n in self.open_list:
             if(n.position == child_state.position):
-                return True             
+                idx = 1
+            # if child_state in self.open_list: 
+                # idx = self.open_list.index(n) 
+                if child_state.g < n.g:
+                    # update the node in the open list
+                    n.g = child_state.g
+                    n.f = child_state.f
+                    n.h = child_state.h
+            # else:
+                # Add the child to the open list
+        if idx==-1:
+            self.open_list.append(child_state)
+            #  and child_state.g > n.g):
+                # return True             
             
-        return False
+        # return False
 
     def check_node_in_closed_list(self, child_state) -> bool:
         '''
@@ -166,9 +180,7 @@ class FastTrajectoryReplanning():
         start_node.g = 0
         self.open_list.append(start_node)
         current = start_node
-
         while(self.open_list != []):
-            
             #---------------------------------------------
             # Calculate the h and f values of Current node
             #---------------------------------------------
@@ -215,19 +227,30 @@ class FastTrajectoryReplanning():
                 #------------------------------------------------
                 if self.check_node_in_closed_list(child_state):
                     continue
+
+                # for n in self.closed_list:
+                #     if(n.position == child_state.position):
+                #         break
                 
                 #----------------------------------------------
                 # If the node is already in open list then skip
                 #----------------------------------------------
                 # Update the priority? (TBD)
-                if self.check_node_in_open_list(child_state):
-                    continue
+                # if self.check_node_in_open_list(child_state):
+                #     continue
+
+                self.check_node_in_open_list(child_state)
+
+                # for n in self.open_list:
+                #     if(n.position == child_state.position and child_state.g > n.g):
+                #         break
                 
                 #-----------------------------------------
                 # Else add the child node to the open list
                 #-----------------------------------------
-                else:
-                    self.open_list.append(child_state)
+                # else:
+                # self.open_list.append(child_state)
+                # print(len(self.open_list))
 
             
 
@@ -313,13 +336,13 @@ class FastTrajectoryReplanning():
 
         if not path_exist: 
             print("Cannot reach the target, nodes expanded : " + str(self.counter_expanded_nodes))
-            print(len(final_path))
+            # print(len(final_path))
 
         else:
             print("Number of nodes expanded : " + str(self.counter_expanded_nodes))
             # print("Nodes expanded : " + str([n.position for n in self.closed_list]))
-            print(len(final_path))
-            self.temporary_visualize(path=final_path)
+            # print(len(final_path))
+            # self.temporary_visualize(path=final_path)
 
 
     def generate_grid(self, grid_index) -> None:
@@ -339,10 +362,10 @@ class FastTrajectoryReplanning():
         # self.start = (4,2)
         # self.target = (4,4)
         # self.actual_grid = [[0,0,0,0,0],
-        #                 [0,0,0,0,0],
-        #                 [0,0,1,0,0],
-        #                 [0,0,1,0,0],
-        #                 [0,0,0,1,"X"]]
+        #                     [0,0,0,0,0],
+        #                     [0,0,1,0,0],
+        #                     [0,0,1,0,0],
+        #                     [0,0,0,1,"X"]]
 
         self.explored_grid = [[0]*len(self.actual_grid) for _ in range(len(self.actual_grid))]
 
@@ -353,6 +376,6 @@ if __name__ == "__main__":
     # obj1.run()
     obj2 = FastTrajectoryReplanning(tie_break=LARGE_G_VALUE)
 
-    for i in range(0, 50):
-        obj2.run(grid_index=8)
-        obj2.counter_expanded_nodes = 0
+    # for i in range(0, 20):
+    obj2.run(grid_index=0)
+    obj2.counter_expanded_nodes = 0
