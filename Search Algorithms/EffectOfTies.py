@@ -151,6 +151,7 @@ class FastTrajectoryReplanning():
                     n.g = child_state.g
                     n.f = child_state.f
                     n.h = child_state.h
+                    n.parent = child_state.parent
             # else:
                 # Add the child to the open list
         if idx==-1:
@@ -341,8 +342,8 @@ class FastTrajectoryReplanning():
         else:
             print("Number of nodes expanded : " + str(self.counter_expanded_nodes))
             # print("Nodes expanded : " + str([n.position for n in self.closed_list]))
-            # print(len(final_path))
-            # self.temporary_visualize(path=final_path)
+            print(len(final_path))
+            self.temporary_visualize(path=final_path)
 
 
     def generate_grid(self, grid_index) -> None:
@@ -376,6 +377,6 @@ if __name__ == "__main__":
     # obj1.run()
     obj2 = FastTrajectoryReplanning(tie_break=LARGE_G_VALUE)
 
-    # for i in range(0, 20):
-    obj2.run(grid_index=0)
+    # for i in range(0, 10):
+    obj2.run(grid_index=9)
     obj2.counter_expanded_nodes = 0
