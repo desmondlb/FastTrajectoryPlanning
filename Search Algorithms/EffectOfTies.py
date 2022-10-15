@@ -1,8 +1,10 @@
 import json
+import time
 from config import *
 from matplotlib import pyplot
 import heapq as hp  #MISSION_HEAP
 import itertools    #MISSION_HEAP
+from AdaptiveAStar import FTRAdaptive
 
 
 class Node():
@@ -378,8 +380,8 @@ class FastTrajectoryReplanning():
         else:
             print("Number of nodes expanded : " + str(self.counter_expanded_nodes))
             # print("Nodes expanded : " + str([n.position for n in self.closed_list]))
-            print(len(final_path))
-            self.temporary_visualize(path=final_path)
+            # print(len(final_path))
+            # self.temporary_visualize(path=final_path)
 
 
     def generate_grid(self, grid_index) -> None:
@@ -396,13 +398,13 @@ class FastTrajectoryReplanning():
         self.target = tuple(self.grid_world.get("Target"))
         self.actual_grid = self.grid_world.get("Grid")
 
-        # self.start = (4,2)
+        # self.start = (0,0)
         # self.target = (4,4)
         # self.actual_grid = [[0,0,0,0,0],
         #                 [0,0,0,0,0],
-        #                 [0,0,1,0,0],
-        #                 [0,0,1,0,0],
-        #                 [0,0,0,1,"X"]]
+        #                 [0,0,0,0,0],
+        #                 [0,0,0,0,0],
+        #                 [0,0,0,0,"X"]]
 
         self.explored_grid = [[0] * len(self.actual_grid) for _ in range(len(self.actual_grid))]
 
@@ -414,7 +416,32 @@ if __name__ == "__main__":
     # obj2 = FastTrajectoryReplanning(tie_break=SMALL_G_VALUE)
     # obj2.run(grid_index=0)
 
+    obj1 = FTRAdaptive(tie_break=LARGE_G_VALUE)
 
-    for i in range(0, 20):
+    times_rfa = []
+    times_adap = []
+    for i in range(0, 30):
+        start = time.time()
+        obj1.run(grid_index=i)
+        
+        obj1.counter_expanded_nodes = 0
+        end = time.time()
+        times_adap.append(end-start)
+        
+
+        start = time.time()
         obj2.run(grid_index=i)
         obj2.counter_expanded_nodes = 0
+        end = time.time()
+        times_rfa.append(end-start)
+        
+    print(times_rfa)
+    print(times_adap)
+    pyplot.plot([i for i in range(30)], times_rfa, label = "Repeated Forward A*")
+    pyplot.plot([i for i in range(30)], times_adap, label = "Adaptive A*")
+    pyplot.legend()
+    pyplot.show()
+
+        
+
+    # print(times)

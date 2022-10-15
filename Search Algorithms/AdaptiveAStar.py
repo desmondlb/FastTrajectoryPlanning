@@ -1,6 +1,8 @@
 import json
 from config import *
 from matplotlib import pyplot
+import heapq as hp  #MISSION_HEAP
+import itertools    #MISSION_HEAP
 
 class Node():
     '''
@@ -17,11 +19,12 @@ class Node():
         self.h = 0
 
 
-class FastTrajectoryReplanning():
+class FTRAdaptive():
 
     def __init__(self, tie_break = LARGE_G_VALUE) -> None:
         self.open_list = []
         self.closed_list = []
+        self.open_list_dict = dict()
         # self.actual_grid, self.explored_grid = self.generate_grid()
 
         #-----------------------------------
@@ -52,6 +55,9 @@ class FastTrajectoryReplanning():
 
         self.counter_expanded_nodes = 0
 
+        #use counter to resolve ties
+        self.counter = itertools.count()    #MISSION_HEAP
+
     
     def print_path(self, current) -> None:
         '''
@@ -72,46 +78,94 @@ class FastTrajectoryReplanning():
         '''
         return abs(start[0]-goal[0]) + abs(start[1]-goal[1])
 
-    def get_priority_node(self) -> Node:
+    def open_list_pop(self) -> tuple:   #MISSION_HEAP
         '''
+            TD - This function used to be get_priority(node)
+
             This function returns the node with the least f value
             from the Open list
             TBD: Implementation with priority heap/queue
-
             This function also implements the effect of ties
-            i.e. It breaks the ties in favour of 
+            i.e. It breaks the ties in favour of
+        '''
+
+        f, t, c, chosen_position = hp.heappop(self.open_list)   #MISSION_HEAP t= tie-breaker
+
+        ##############MISSION_HEAP#######################
         '''
         llst_nodes_smallest_f = []
         priority_node = self.open_list[0]
 
         for n in self.open_list:
-            if(n.f < priority_node.f):
+            if (n.f < priority_node.f):
                 priority_node = n
 
-        #---------------------------------------------
+        # ---------------------------------------------
         # Push all the nodes with the smallest f value
-        #---------------------------------------------
+        # ---------------------------------------------
         for n in self.open_list:
-            if(n.f == priority_node.f):
+            if (n.f == priority_node.f):
                 llst_nodes_smallest_f.append(n)
 
-        if len(llst_nodes_smallest_f)==1:
+        if len(llst_nodes_smallest_f) == 1:
             return llst_nodes_smallest_f[0]
 
-        #-------------------------------------------
+        # -------------------------------------------
         # Break ties in favour of the set preference
-        #-------------------------------------------
+        # -------------------------------------------
         chosen_node = llst_nodes_smallest_f[0]
 
         for n in llst_nodes_smallest_f:
-            if self.tie_breaker_pref==LARGE_G_VALUE:
-                if(n.g > chosen_node.g):
+            if self.tie_breaker_pref == LARGE_G_VALUE:
+                if (n.g > chosen_node.g):
                     chosen_node = n
             else:
-                if(n.g < chosen_node.g):
+                if (n.g < chosen_node.g):
                     chosen_node = n
+        '''
 
-        return chosen_node
+        return f, t, c, chosen_position
+    
+    # def get_priority_node(self) -> Node:
+    #     '''
+    #         This function returns the node with the least f value
+    #         from the Open list
+    #         TBD: Implementation with priority heap/queue
+
+    #         This function also implements the effect of ties
+    #         i.e. It breaks the ties in favour of 
+    #     '''
+    #     llst_nodes_smallest_f = []
+    #     priority_node = self.open_list[0]
+
+    #     for n in self.open_list:
+    #         if(n.f < priority_node.f):
+    #             priority_node = n
+
+    #     #---------------------------------------------
+    #     # Push all the nodes with the smallest f value
+    #     #---------------------------------------------
+    #     for n in self.open_list:
+    #         if(n.f == priority_node.f):
+    #             llst_nodes_smallest_f.append(n)
+
+    #     if len(llst_nodes_smallest_f)==1:
+    #         return llst_nodes_smallest_f[0]
+
+    #     #-------------------------------------------
+    #     # Break ties in favour of the set preference
+    #     #-------------------------------------------
+    #     chosen_node = llst_nodes_smallest_f[0]
+
+    #     for n in llst_nodes_smallest_f:
+    #         if self.tie_breaker_pref==LARGE_G_VALUE:
+    #             if(n.g > chosen_node.g):
+    #                 chosen_node = n
+    #         else:
+    #             if(n.g < chosen_node.g):
+    #                 chosen_node = n
+
+    #     return chosen_node
 
     def get_valid_moves(self, current) -> list:
         '''
@@ -135,33 +189,79 @@ class FastTrajectoryReplanning():
 
         return current_legal_moves
 
-    def check_node_in_open_list(self, child_state) -> None:
+    # def check_node_in_open_list(self, child_state) -> None:
+    #     '''
+    #         This function checks whether a child node is in the open list
+    #         and whether it has a better f value
+    #     '''
+    #     # for n in self.open_list:
+    #     #     if(n.position == child_state.position):
+    #     #         return True             
+            
+    #     # return False
+
+    #     idx = -1
+    #     for n in self.open_list:
+    #         if(n.position == child_state.position):
+    #             idx = 1
+    #         # if child_state in self.open_list: 
+    #             # idx = self.open_list.index(n) 
+    #             if child_state.g < n.g:
+    #                 # update the node in the open list
+    #                 n.g = child_state.g
+    #                 n.f = child_state.f
+    #                 n.h = child_state.h
+    #                 n.parent = child_state.parent
+    #         # else:
+    #             # Add the child to the open list
+    #     if idx==-1:
+    #         self.open_list.append(child_state)
+
+    def check_node_in_open_list(self, child_state) -> bool:
         '''
             This function checks whether a child node is in the open list
             and whether it has a better f value
         '''
-        # for n in self.open_list:
-        #     if(n.position == child_state.position):
-        #         return True             
-            
-        # return False
-
         idx = -1
+        existing_node = self.open_list_dict.get(child_state.position)   #MISSION_HEAP
+        if existing_node:
+            idx = 1
+            if child_state.g < existing_node.g:
+                #update the node in the open list
+                existing_node.g = child_state.g
+                existing_node.h = child_state.h
+                existing_node.f = child_state.f
+                existing_node.parent = child_state.parent
+        
+        if idx == -1:
+            self.open_list_push(child_state)
+        
+        '''
+        #MISSION_HEAP
+        
         for n in self.open_list:
-            if(n.position == child_state.position):
+            if (n[3].position == child_state.position):
                 idx = 1
-            # if child_state in self.open_list: 
-                # idx = self.open_list.index(n) 
-                if child_state.g < n.g:
+                # if child_state in self.open_list:
+                # idx = self.open_list.index(n)
+                if child_state.g < n[3].g:
                     # update the node in the open list
+                    n[3].g = child_state.g
+                    n[3].f = child_state.f
+                    n[3].h = child_state.h
                     n.g = child_state.g
                     n.f = child_state.f
                     n.h = child_state.h
-                    n.parent = child_state.parent
             # else:
-                # Add the child to the open list
-        if idx==-1:
-            self.open_list.append(child_state)
+            # Add the child to the open list
+        if idx == -1:
+            #self.open_list.append(child_state)
+            self.open_list_push(child_state)
+        '''
+            #  and child_state.g > n.g):
+            # return True
+
+        # return False
 
     def check_node_in_closed_list(self, child_state) -> bool:
         '''
@@ -175,13 +275,23 @@ class FastTrajectoryReplanning():
         return False              
 
 
+    #MISSION_HEAP  
+    # pushes new node onto the open_list heap and dictionary
+    def open_list_push(self, node) -> Node:     
+        if self.tie_breaker_pref == LARGE_G_VALUE:
+            hp.heappush(self.open_list, (node.f, node.h, next(self.counter), node.position))
+        else:
+            hp.heappush(self.open_list, (node.f, node.g, next(self.counter), node.position))
+        self.open_list_dict[node.position] = node
+
     def a_star(self, start, goal) -> Node:
         '''
             Implementation of the simple A* algorithm
         '''
         start_node = Node(position=start)
         start_node.g = 0
-        self.open_list.append(start_node)
+        self.open_list_push(start_node)  #MISSION_HEAP
+        # self.open_list.append(start_node)
         current = start_node
 
         while(self.open_list != []):
@@ -189,14 +299,16 @@ class FastTrajectoryReplanning():
             #---------------------------------------------
             # Calculate the h and f values of Current node
             #---------------------------------------------
-            current = self.get_priority_node()
+            f_value, tie_break, c, cell = self.open_list_pop()  #MISSION_HEAP
+            current = self.open_list_dict[cell]
             current.h = self.h_values[current.position[0]][current.position[1]]
             current.f = current.g + current.h
             
             #------------------------------------
             # Popping the node from the open list
             #------------------------------------
-            self.open_list.remove(current)
+            # self.open_list.remove(current)
+            del self.open_list_dict[cell]  #MISSION_HEAP
 
             if current.position == goal:
                 break
@@ -316,6 +428,7 @@ class FastTrajectoryReplanning():
             # Empty open and closed list
             self.open_list = []
             self.closed_list = []
+            self.open_list_dict.clear()
 
             planned_dest = self.a_star(self.start, self.target)
             
@@ -344,8 +457,8 @@ class FastTrajectoryReplanning():
 
         else:
             print("Number of nodes expanded : " + str(self.counter_expanded_nodes))
-            print(len(final_path))
-            self.temporary_visualize(path=final_path)
+            # print(len(final_path))
+            # self.temporary_visualize(path=final_path)
 
     def generate_grid(self, grid_index) -> None:
         '''
@@ -374,10 +487,10 @@ class FastTrajectoryReplanning():
 
 
 if __name__ == "__main__":
-    obj1 = FastTrajectoryReplanning(tie_break=LARGE_G_VALUE)
-    # for i in range(0, 10):
-    obj1.run(grid_index=9)
-    obj1.counter_expanded_nodes = 0
+    obj1 = FTRAdaptive(tie_break=LARGE_G_VALUE)
+    for i in range(0, 20):
+        obj1.run(grid_index=i)
+        obj1.counter_expanded_nodes = 0
 
     # obj2 = FastTrajectoryReplanning(tie_break=LARGE_G_VALUE)
     # obj1.run()
