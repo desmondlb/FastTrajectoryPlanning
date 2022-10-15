@@ -141,7 +141,7 @@ class FastTrajectoryReplanning():
             and whether it has a better f value
         '''
         for n in self.open_list:
-            if(n.position == child_state.position):
+            if(n.position == child_state.position and n.g < child_state.g):
                 return True             
             
         return False
@@ -157,12 +157,13 @@ class FastTrajectoryReplanning():
             
         return False
 
-    def a_star(self, start, goal) -> None:
+    def a_star(self, start, goal) -> Node:
         '''
             Implementation of the simple A* algorithm
         '''
         start_node = Node(position=start)
-        start_node.g = self.g_values[start[0]][start[1]]
+        # start_node.g = self.g_values[start[0]][start[1]]
+        start_node.g = 0
         self.open_list.append(start_node)
         current = start_node
 
@@ -188,7 +189,7 @@ class FastTrajectoryReplanning():
             self.closed_list.append(current)
 
             
-            self.g_values[current.position[0]][current.position[1]] = current.g
+            # self.g_values[current.position[0]][current.position[1]] = current.g
 
             
 
@@ -244,8 +245,8 @@ class FastTrajectoryReplanning():
         travelled_path = []
         for cell in path:
             if self.actual_grid[cell[0]][cell[1]] != 1:
-                current_state = cell
-                travelled_path.append(current_state)
+                travelled_path.append(cell)
+                self.observe_nearby_cells(current_state=cell)
             else:
                 break
         return travelled_path
@@ -277,7 +278,7 @@ class FastTrajectoryReplanning():
         path_exist = True
         # start = self.start
         # goal = self.target
-
+        counter = 0
         while path_exist and not end:
             
             # self.counter_expanded_nodes = 0
@@ -294,7 +295,7 @@ class FastTrajectoryReplanning():
             planned_dest = self.a_star(self.start, self.target)
             
             if planned_dest.position == self.target:
-
+                counter += 1
                 # trace planned path back to the the node after start and make that move
                 travelled_path = self.move_in_real_grid(
                     current_state=self.start, path=self.print_path(planned_dest))
@@ -315,8 +316,9 @@ class FastTrajectoryReplanning():
         else:
             print("Number of nodes expanded : " + str(self.counter_expanded_nodes))
             # print("Nodes expanded : " + str([n.position for n in self.closed_list]))
-            # print(final_path)
-            # self.temporary_visualize(path=final_path)
+            print(len(final_path))
+            self.temporary_visualize(path=final_path)
+
 
     def generate_grid(self, grid_index) -> None:
         '''
@@ -332,50 +334,23 @@ class FastTrajectoryReplanning():
         self.target = tuple(self.grid_world.get("Target"))
         self.actual_grid = self.grid_world.get("Grid")
 
-        self.start = (4,2)
-        self.target = (4,4)
-        self.actual_grid = [[0,0,0,0,0],
-                        [0,0,0,0,0],
-                        [0,0,1,0,0],
-                        [0,0,1,0,0],
-                        [0,0,0,1,"X"]]
-
-        self.explored_grid = [[0]*len(self.actual_grid) for _ in range(len(self.actual_grid))]
-
-        self.g_values = [[0]*len(self.actual_grid) for _ in range(len(self.actual_grid))]
-
-        #-----------
-        # Dummy grid
-        #-----------
-        # actual_grid = [[0,0,0,0,0],
+        # self.start = (4,2)
+        # self.target = (4,4)
+        # self.actual_grid = [[0,0,0,0,0],
         #                 [0,0,0,0,0],
-        #                 [0,0,0,0,0],
-        #                 [0,0,0,0,0],
-        #                 [0,0,0,0,"X"]]
-
-        # actual_grid = [[0,0,1,0,0],
-        #                 [0,0,1,0,0],
-        #                 [0,0,0,1,0],
-        #                 [0,0,1,"X",0],
-        #                 [0,0,0,0,0]]
-
-        # actual_grid = [[0,0,0,0,0],
-        #                 [0,0,1,0,0],
         #                 [0,0,1,0,0],
         #                 [0,0,1,0,0],
         #                 [0,0,0,1,"X"]]
 
-        # explored_grid = [[0]*len(actual_grid) for _ in range(len(actual_grid))]
-
-        # return actual_grid, explored_grid
+        self.explored_grid = [[0]*len(self.actual_grid) for _ in range(len(self.actual_grid))]
 
 
 
 if __name__ == "__main__":
-    obj1 = FastTrajectoryReplanning(tie_break=LARGE_G_VALUE)
-    obj1.run()
-    # obj2 = FastTrajectoryReplanning(tie_break=LARGE_G_VALUE)
+    # obj1 = FastTrajectoryReplanning(tie_break=LARGE_G_VALUE)
+    # obj1.run()
+    obj2 = FastTrajectoryReplanning(tie_break=LARGE_G_VALUE)
 
-    # for i in range(0, 10):
-    #     obj2.run(grid_index=i)
-    #     obj2.counter_expanded_nodes = 0
+    for i in range(0, 50):
+        obj2.run(grid_index=9)
+        obj2.counter_expanded_nodes = 0
