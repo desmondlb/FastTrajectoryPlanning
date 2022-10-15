@@ -141,7 +141,7 @@ class FastTrajectoryReplanning():
             and whether it has a better f value
         '''
         for n in self.open_list:
-            if(n.position == child_state.position and n.g < child_state.g):
+            if(n.position == child_state.position):
                 return True             
             
         return False
@@ -318,6 +318,7 @@ class FastTrajectoryReplanning():
 
         if not path_exist: 
             print("Cannot reach the target, nodes expanded : " + str(self.counter_expanded_nodes))
+            print(len(final_path))
 
         else:
             print("Number of nodes expanded : " + str(self.counter_expanded_nodes))
@@ -353,9 +354,9 @@ class FastTrajectoryReplanning():
 
 if __name__ == "__main__":
     obj1 = FastTrajectoryReplanning(tie_break=LARGE_G_VALUE)
-    for i in range(10, 20):
-        obj1.run(grid_index=9)
-        obj1.counter_expanded_nodes = 0
+    # for i in range(10, 20):
+    obj1.run(grid_index=8)
+    obj1.counter_expanded_nodes = 0
 
     # obj2 = FastTrajectoryReplanning(tie_break=LARGE_G_VALUE)
     # obj1.run()
