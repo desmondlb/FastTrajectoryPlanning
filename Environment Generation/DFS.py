@@ -11,6 +11,7 @@ class Cell():
         self.r = 101
         self.c= 101
         self.grid_val = []
+        #Defining random start and target in the range of the grid
         self.start = (randint(0,int(0.2*self.r)),randint(0,int(0.2*self.c)))
         self.target = (randint(int(0.8*self.r),self.r-1),randint(int(0.8*self.c),self.c -1))
         #print("Target",self.target)
@@ -32,12 +33,14 @@ class Cell():
                 # Initialise all values to False at the beginning.Once traveled will be set to True
 
     def valid_move(self,curr_pos) -> bool:
+        #Checking if the current move is valid by comparing with start position dimensions of grid
         if (curr_pos[0]>= 0 and curr_pos[1] >=0 and curr_pos[0]<self.r and curr_pos[1]<self.c):
             return True
         else:
             return False
 
     def unvisited(self,grid_val,r,c) -> tuple:
+        #Checking if the node is unvisited by checking boolean value of grid_val array. False is univisted
         for i in range(0,r):
             for j in range(0,c):
                 if(grid_val[i][j]==False and (i,j)!=self.target):
@@ -64,7 +67,8 @@ class Cell():
                     #print(self.unvisited(self.grid_val,self.r,self.c)!=(-1,-1))
                     if(self.valid_move((cell_x,curr_pos[1])) and self.grid[cell_x][curr_pos[1]] !=1 and self.grid_val[cell_x][curr_pos[1]]==False and (cell_x,curr_pos[1])!= self.target): #Condition for cell move is valid and not visited
                         self.grid[cell_x][curr_pos[1]] = 1 if random.random() < 0.2 else 0
-                        stack.append((cell_x,curr_pos[1]))
+                        stack.append((cell_x,curr_pos[1])) 
+                        #Appending the position of the neighbour in the grid to iteratively apply DFS on these neighbours 
                         #self.DFS((cell_x,curr_pos[1])) #Call from neighbour cell to DFS
                     elif(self.valid_move((curr_pos[0],cell_y)) and self.grid[curr_pos[0]][cell_y] !=1 and self.grid_val[curr_pos[0]][cell_y]==False and (curr_pos[0],cell_y)!=self.target): #Condition for cell move is valid and not visited
                         self.grid[curr_pos[0]][cell_y] = 1 if random.random() < 0.2 else 0
@@ -99,4 +103,3 @@ if __name__ == "__main__":
     with open("Gridworlds/gridworlds.json",'w+') as f:
        json.dump(dictionary, f)
     
-
