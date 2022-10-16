@@ -56,6 +56,8 @@ class RFAWithTies():
         # use counter to resolve ties
         self.counter = itertools.count()  # MISSION_HEAP
 
+        self.observed_paths = []
+
     def print_path(self, current) -> list:
         '''
             This function returns a list of positions that
@@ -231,25 +233,29 @@ class RFAWithTies():
         for cell in path:
             if self.actual_grid[cell[0]][cell[1]] != 1:
                 travelled_path.append(cell)
-                self.observe_nearby_cells(current_state=cell)
+                obs = self.observe_nearby_cells(current_state=cell)
+                self.observed_paths.append(obs)
             else:
                 break
         return travelled_path
 
-    def observe_nearby_cells(self, current_state) -> None:
+    def observe_nearby_cells(self, current_state) -> list:
         '''
             uses get_valid_moves() to update agent's memory
         '''
+        explored = []
         field_of_view = self.get_valid_moves(current=current_state)
         for cell in field_of_view:
             if self.actual_grid[cell[0]][cell[1]] == 1 and self.explored_grid[cell[0]][cell[1]] == 0:
                 self.explored_grid[cell[0]][cell[1]] = 1
+                explored.append(cell)
+        return explored
 
     def animate_path(self, path):
         '''
             function to visualize the final path taken by the agent in the grid
         '''
-        ani = AnimatePath(grid=self.actual_grid, path=path, start=self.start, target=self.target)
+        ani = AnimatePath(grid=self.actual_grid, path=path, start=self.start, target=self.target, observed = self.observed_paths)
         ani.show_path()
 
     def visualize(self, path):
@@ -273,11 +279,14 @@ class RFAWithTies():
         end = False
         path_exist = True
 
+        
+
         while path_exist and not end:
             # ---------------------------------------------------
             # Check the surroundings and update the explored grid
             # ---------------------------------------------------
-            self.observe_nearby_cells(current_state=self.start)
+            observed_node = self.observe_nearby_cells(current_state=self.start)
+            self.observed_paths.append(observed_node)
 
             # ----------------------------------------------
             # Empty open and closed list
@@ -314,8 +323,8 @@ class RFAWithTies():
         else:
             print("Number of nodes expanded : " + str(self.counter_expanded_nodes))
             #print(len(final_path))
-            #self.animate_path(path=final_path)    #uncomment to animate
-            #self.visualize(path=final_path)       #uncomment to visualize
+            self.animate_path(path=final_path)    #uncomment to animate
+            self.visualize(path=final_path)       #uncomment to visualize
 
     def generate_grid(self, grid_index) -> None:
         '''

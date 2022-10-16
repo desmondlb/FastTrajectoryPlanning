@@ -57,6 +57,7 @@ class FTRAdaptive():
         self.counter_expanded_nodes = 0
 
         self.counter = itertools.count()
+        self.observed_paths = []
 
     def print_path(self, current) -> None:
         '''
@@ -244,7 +245,8 @@ class FTRAdaptive():
         for cell in path:
             if self.actual_grid[cell[0]][cell[1]] != 1:
                 travelled_path.append(cell)
-                self.observe_nearby_cells(current_state=cell)
+                obs = self.observe_nearby_cells(current_state=cell)
+                self.observed_paths.append(obs)
             else:
                 break
         return travelled_path
@@ -253,16 +255,19 @@ class FTRAdaptive():
         '''
             uses get_valid_moves() to update agent's memory
         '''
+        explored = []
         field_of_view = self.get_valid_moves(current=current_state)
         for cell in field_of_view:
             if self.actual_grid[cell[0]][cell[1]] == 1 and self.explored_grid[cell[0]][cell[1]] == 0:
                 self.explored_grid[cell[0]][cell[1]] = 1
+                explored.append(cell)
+        return explored
 
     def animate_path(self, path):
         '''
             function to visualize the final path taken by the agent in the grid
         '''
-        ani = AnimatePath(grid=self.actual_grid, path=path, start=self.start, target=self.target)
+        ani = AnimatePath(grid=self.actual_grid, path=path, start=self.start, target=self.target, observed = self.observed_paths)
         ani.show_path()
 
     def visualize(self, path):
@@ -290,7 +295,8 @@ class FTRAdaptive():
             # ---------------------------------------------------
             # Check the surroundings and update the explored grid
             # ---------------------------------------------------
-            self.observe_nearby_cells(current_state=self.start)
+            observed_node = self.observe_nearby_cells(current_state=self.start)
+            self.observed_paths.append(observed_node)
 
             # ----------------------------------------------
             # Empty open and closed list
@@ -333,7 +339,7 @@ class FTRAdaptive():
         else:
             print("Number of nodes expanded : " + str(self.counter_expanded_nodes))
             #print(len(final_path))
-            #self.animate_path(path=final_path)  #uncomment to animate final path
+            self.animate_path(path=final_path)  #uncomment to animate final path
             #self.visualize(path=final_path)    #uncomment to visualize final path
 
     def generate_grid(self, grid_index) -> None:
@@ -367,5 +373,5 @@ class FTRAdaptive():
 
 if __name__ == "__main__":
     obj1 = FTRAdaptive(tie_break=LARGE_G_VALUE)
-    obj1.run(grid_index=2)
+    obj1.run(grid_index=1)
     obj1.counter_expanded_nodes = 0
