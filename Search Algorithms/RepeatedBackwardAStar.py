@@ -1,8 +1,9 @@
 import json
 from config import *
+import heapq as hp
+import itertools
+from AnimatePath import AnimatePath
 from matplotlib import pyplot
-import heapq as hp  #MISSION_HEAP
-import itertools    #MISSION_HEAP
 
 
 class Node():
@@ -21,7 +22,7 @@ class Node():
         self.h = 0
 
 
-class FastTrajectoryReplanning():
+class FTRBackward():
 
     def __init__(self, tie_break=LARGE_G_VALUE) -> None:
         self.open_list = []             # binary heap which sorts nodes according to least f,g, or h values
@@ -39,7 +40,7 @@ class FastTrajectoryReplanning():
         # --------------------------------------------------------------
         self.tie_breaker_pref = tie_break
         self.grid_worlds = None
-        with open('Gridworlds/gridworlds_10.json', 'r') as f:
+        with open('Gridworlds/gridworlds.json', 'r') as f:
             # Reading from json file
             self.grid_worlds = json.load(f)
 
@@ -86,48 +87,13 @@ class FastTrajectoryReplanning():
             i.e. It breaks the ties in favour of
         '''
 
-        f, t, c, chosen_position = hp.heappop(self.open_list)   #MISSION_HEAP t= tie-breaker
-
-        ##############MISSION_HEAP#######################
-        '''
-        llst_nodes_smallest_f = []
-        priority_node = self.open_list[0]
-
-        for n in self.open_list:
-            # if (n.f <= priority_node.f):
-            if (n.f < priority_node.f):
-                priority_node = n
-
-        # ---------------------------------------------
-        # Push all the nodes with the smallest f value
-        # ---------------------------------------------
-        for n in self.open_list:
-            if (n.f == priority_node.f):
-                llst_nodes_smallest_f.append(n)
-
-        if len(llst_nodes_smallest_f) == 1:
-            return llst_nodes_smallest_f[0]
-
-        # -------------------------------------------
-        # Break ties in favour of the set preference
-        # -------------------------------------------
-        chosen_node = llst_nodes_smallest_f[0]
-
-        for n in llst_nodes_smallest_f:
-            if self.tie_breaker_pref == LARGE_G_VALUE:
-                if (n.g > chosen_node.g):
-                    chosen_node = n
-            else:
-                if (n.g < chosen_node.g):
-                    chosen_node = n
-        '''
-
+        f, t, c, chosen_position = hp.heappop(self.open_list)
         return f, t, c, chosen_position
 
     def get_valid_moves(self, current) -> list:
         '''
             Here we check the following
-                1. Does the node lie within grid boundaries
+                1. Does the node lie within grid boundaries?
                 2. Is there an obstacle?
         '''
         current_legal_moves = []
@@ -146,39 +112,31 @@ class FastTrajectoryReplanning():
 
         return current_legal_moves
 
-
-    def check_node_in_open_list(self, child_state) -> bool:
+    def check_and_update_node_in_open_list(self, child_state) -> None:
         '''
             This function checks whether a child node is in the open list
             and whether it has a better f value
+            It also adds the node to the open list if it's not already there
         '''
-        idx = -1
-        existing_node = self.open_list_dict.get(child_state.position)
+        existing_node = self.open_list_dict.get(child_state.position)  # MISSION_HEAP
+
         if existing_node:
-            idx = 1
-            if child_state.g < existing_node.g:
-                #update the node in the open list
+
+            if child_state.f < existing_node.f:
+                # ---------------------------------
+                # update the node in the open list
+                # ---------------------------------
                 existing_node.g = child_state.g
                 existing_node.h = child_state.h
                 existing_node.f = child_state.f
+                existing_node.parent = child_state.parent
 
-        if idx == -1:
+        else:
             self.open_list_push(child_state)
-
-        '''
-        #MISSION_HEAP
-        
-        for n in self.open_list:
-            if (n.position == child_state.position):
-                return True
-
-        return False
-        '''
 
     def check_node_in_closed_list(self, child_state) -> bool:
         '''
             This function checks whether a child node is in the closed list
-            and whether it has a better f value
         '''
         for n in self.closed_list:
             if (n.position == child_state.position):
@@ -187,42 +145,41 @@ class FastTrajectoryReplanning():
         return False
 
 
-    # pushes new node onto the open_list heap and dictionary
+
     def open_list_push(self, node) -> Node:
+        '''
+            pushes new node onto the open_list heap and dictionary
+        '''
         if self.tie_breaker_pref == LARGE_G_VALUE:
             hp.heappush(self.open_list, (node.f, node.h, next(self.counter), node.position))
         else:
             hp.heappush(self.open_list, (node.f, node.g, next(self.counter), node.position))
         self.open_list_dict[node.position] = node
 
-
-
-    def a_star(self, start, goal) -> Node:
+    def a_star(self, start_node, goal) -> Node:
         '''
-            Implementation of the simple A* algorithm
+            Implementation of the A* algorithm
         '''
-        start_node = Node(position=start)
-        # start_node.g = self.g_values[start[0]][start[1]]
-        start_node.g = 0
-        #self.open_list.append(start_node)
-        self.open_list_push(start_node)  #MISSION_HEAP
-
+        # --------------------------
+        # Push node in the open list
+        # --------------------------
         current = start_node
+        self.open_list_push(start_node)
 
         while (self.open_list != []):
 
             # ---------------------------------------------
             # Calculate the h and f values of Current node
             # ---------------------------------------------
-            f_value, tie_break, c, cell = self.open_list_pop()  #MISSION_HEAP
+            f_value, tie_break, c, cell = self.open_list_pop()
             current = self.open_list_dict[cell]
-            current.h = self.get_manhattan_dist(start, goal)
+            current.h = self.get_manhattan_dist(current.position, goal)
             current.f = current.g + current.h
 
             # ------------------------------------
             # Popping the node from the open list
             # ------------------------------------
-            del self.open_list_dict[cell]  #MISSION_HEAP
+            del self.open_list_dict[cell]
 
             if current.position == goal:
                 break
@@ -230,8 +187,6 @@ class FastTrajectoryReplanning():
             # Append the current node to the closed list
             # ---------------------------------------------------
             self.closed_list.append(current)
-
-            # self.g_values[current.position[0]][current.position[1]] = current.g
 
             moves = self.get_valid_moves(current.position)
 
@@ -257,31 +212,22 @@ class FastTrajectoryReplanning():
                     continue
 
                 # ----------------------------------------------
-                # If the node is already in open list then skip
+                # If the node is already in open list then update the node
+                # depending on the g value Else push the node in the open list
                 # ----------------------------------------------
-                # Update the priority? (TBD)
-                #if self.check_node_in_open_list(child_state):
-                #   continue
-
-                self.check_node_in_open_list(child_state)
-
-                # -----------------------------------------
-                # Else add the child node to the open list
-                # -----------------------------------------
-                # else:
-                # self.open_list.append(child_state)
-                # print(len(self.open_list))
+                self.check_and_update_node_in_open_list(child_state)
 
         # ----------------------------------------------------------------------
         # If open list is empty in the end then return current to indicate no path
         # ----------------------------------------------------------------------
-        # if not self.open_list: return current
 
-        self.counter_expanded_nodes += len(self.closed_list) - 1
+        self.counter_expanded_nodes += len(self.closed_list)
         return current
 
-    # function to move agent through the grid; path recorded in travelled_path
-    def move_in_real_grid(self, current_state, path) -> list:
+    def move_in_real_grid(self, path) -> list:
+        '''
+            uses get_valid_moves() to update agent's memory
+        '''
         travelled_path = []
         for cell in path:
             if self.actual_grid[cell[0]][cell[1]] != 1:
@@ -291,15 +237,23 @@ class FastTrajectoryReplanning():
                 break
         return travelled_path
 
-    # uses get_valid_moves() to update agent's memory
     def observe_nearby_cells(self, current_state) -> None:
+        '''
+            uses get_valid_moves() to update agent's memory
+        '''
         field_of_view = self.get_valid_moves(current=current_state)
         for cell in field_of_view:
             if self.actual_grid[cell[0]][cell[1]] == 1 and self.explored_grid[cell[0]][cell[1]] == 0:
                 self.explored_grid[cell[0]][cell[1]] = 1
 
-    # function to visualize the final path taken by the agent in the grid (needs tweaking)
-    def temporary_visualize(self, path):
+    def animate_path(self, path):
+        '''
+            function to visualize the final path taken by the agent in the grid
+        '''
+        ani = AnimatePath(grid=self.actual_grid, path=path, start=self.start, target=self.target)
+        ani.show_path()
+
+    def visualize(self, path):
         for point in path:
             self.actual_grid[point[0]][point[1]] = 4
         self.actual_grid[self.start[0]][self.start[1]] = 3
@@ -307,84 +261,74 @@ class FastTrajectoryReplanning():
 
         pyplot.imshow(self.actual_grid, cmap="RdBu")
         pyplot.show()
-        '''
-        pyplot.imshow(self.actual_grid)
-        pyplot.show()
-        '''
+
 
     def run(self, grid_index=0) -> None:
         '''
             This function runs the A* algorithm on the explored grid
         '''
         self.generate_grid(grid_index)
+        final_path = [self.start]
+        current_state = self.start
 
-        for point in self.actual_grid:
-            print(point)
-
-        final_path = []
-        final_path.append(self.start)
         end = False
         path_exist = True
-        search_start = self.start
+        search_start = Node(position=self.target)
 
         while path_exist and not end:
+            # ---------------------------------------------------
             # Check the surroundings and update the explored grid
-            self.observe_nearby_cells(current_state=search_start)
-            # Debugging
-            '''
-            print('Memory:')
-            for i in self.explored_grid:
-                print(i)
-            '''
+            # ---------------------------------------------------
+            self.observe_nearby_cells(current_state=self.start)
 
+            # ----------------------------------------------
             # Empty open and closed list
+            # ----------------------------------------------
             self.open_list = []
             self.closed_list = []
             self.open_list_dict.clear()
 
+            # -----------------------------------------------------------
             # Exchange goal with start since this is Repeated Backward A*
-            planned_dest = self.a_star(start=self.target, goal=search_start)
+            # -----------------------------------------------------------
+            planned_dest = self.a_star(start_node=search_start, goal=current_state)
 
-            print('Planned path:')
-            print(self.print_path(planned_dest))
 
-            if planned_dest.position == search_start:  # compare with start since this is Repeated Backward A*
+            if planned_dest.position == current_state:  # compare with start since this is Repeated Backward A*
 
                 # trace planned path back to the the node after start and make that move
-                travelled_path = self.move_in_real_grid(
-                    current_state=search_start, path=self.print_path(planned_dest))
-
-                '''
-                print('Travelled path:')
-                print(travelled_path)
-                '''
+                travelled_path = self.move_in_real_grid(path=self.print_path(planned_dest))
 
                 if (travelled_path and travelled_path[-1] == self.target):
                     end = True
-                else:
+                elif travelled_path:
                     # Set a new start state as the last node in travelled path
-                    search_start = travelled_path[-1]
+                    current_state = travelled_path[-1]
+                    # --------------------------------------------------------
+                    # Set a new start state as the last node in travelled path
+                    # --------------------------------------------------------
+                else:
+                    continue
 
                 final_path.extend(travelled_path)
             else:
                 path_exist = False
 
         if not path_exist:
-            print("Cannot reach the target")
-            pyplot.imshow(self.actual_grid)
-            pyplot.show()
+            print("Cannot reach the target, nodes expanded : " + str(self.counter_expanded_nodes))
 
         else:
             print("Number of nodes expanded : " + str(self.counter_expanded_nodes))
-            # print("Nodes expanded : " + str([n.position for n in self.closed_list]))
-            # print(final_path)
-            self.temporary_visualize(path=final_path)
+            #print(len(final_path))
+            self.animate_path(path=final_path)    #uncomment to animate
+            self.visualize(path=final_path)       #uncomment to visualize
 
     def generate_grid(self, grid_index) -> None:
         '''
             This function generates N*N grid with the following properties
                 1. Obstacles generated with 30% probability to construct a maze like structure
-                2. Target position denoted with "X"
+                2. Target position generated in the lower right corner of the maze
+                3. Agent position generated in the upper right corner of the maze
                 3. Obstacles denoted with 1
         '''
 
@@ -396,50 +340,10 @@ class FastTrajectoryReplanning():
 
         self.explored_grid = [[0] * len(self.actual_grid) for _ in range(len(self.actual_grid))]
 
-        # -----------
-        # Dummy grid
-
-        '''
-        self.grid = [[0, 0, 0],
-                     [0, 0, 0],
-                     [0, 0, 0]]
-
-
-        actual_grid = [[0, 1, 'X'],
-                       [0, 1, 0],
-                       [0, 0, 0]]
-
-        # agent's memory
-
-
-        self.grid = [[0, 0, "X", 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0]]
-
-
-
-
-        # real environment grid
-        actual_grid = [[0, 1, "X", 0, 0, 0, 0],
-                       [0, 1, 1, 1, 0, 1, 0],
-                       [0, 0, 0, 1, 1, 0, 0],
-                       [0, 1, 1, 1, 0, 1, 0],
-                       [0, 1, 1, 0, 0, 1, 0],
-                       [0, 0, 1, 0, 0, 0, 0],
-                       [0, 0, 0, 0, 0, 0, 0]]
-        '''
-
-        # explored_grid = [[0]*len(actual_grid) for _ in range(len(actual_grid))]
-
-        # return actual_grid, explored_grid
 
 
 if __name__ == "__main__":
-    obj2 = FastTrajectoryReplanning(tie_break=LARGE_G_VALUE)
+    obj2 = FTRBackward(tie_break=LARGE_G_VALUE)
     # start_state = (0, 0)
     # target_state = (0, 2)
     # obj.run(start=start_state, goal=target_state)
