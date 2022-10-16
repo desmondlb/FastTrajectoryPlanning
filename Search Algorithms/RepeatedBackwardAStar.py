@@ -78,11 +78,9 @@ class FTRBackward():
 
     def open_list_pop(self) -> tuple:   #MISSION_HEAP
         '''
-            TD - This function used to be get_priority(node)
 
             This function returns the node with the least f value
             from the Open list
-            TBD: Implementation with priority heap/queue
             This function also implements the effect of ties
             i.e. It breaks the ties in favour of
         '''
@@ -320,8 +318,8 @@ class FTRBackward():
         else:
             print("Number of nodes expanded : " + str(self.counter_expanded_nodes))
             #print(len(final_path))
-            self.animate_path(path=final_path)    #uncomment to animate
-            self.visualize(path=final_path)       #uncomment to visualize
+            #self.animate_path(path=final_path)    #uncomment to animate
+            #self.visualize(path=final_path)       #uncomment to visualize
 
     def generate_grid(self, grid_index) -> None:
         '''
