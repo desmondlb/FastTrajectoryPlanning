@@ -319,11 +319,13 @@ class RFAWithTies():
 
         if not path_exist:
             print("Cannot reach the target, nodes expanded : " + str(self.counter_expanded_nodes))
+            # self.animate_path(path=final_path)  #uncomment to animate final path
+            self.visualize(path=final_path)    #uncomment to visualize final path
 
         else:
             print("Number of nodes expanded : " + str(self.counter_expanded_nodes))
             #print(len(final_path))
-            self.animate_path(path=final_path)    #uncomment to animate
+            # self.animate_path(path=final_path)    #uncomment to animate
             self.visualize(path=final_path)       #uncomment to visualize
 
     def generate_grid(self, grid_index) -> None:

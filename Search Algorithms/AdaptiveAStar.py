@@ -335,12 +335,14 @@ class FTRAdaptive():
 
         if not path_exist:
             print("Cannot reach the target, nodes expanded : " + str(self.counter_expanded_nodes))
+            # self.animate_path(path=final_path)  #uncomment to animate final path
+            # self.visualize(path=final_path)    #uncomment to visualize final path
 
         else:
             print("Number of nodes expanded : " + str(self.counter_expanded_nodes))
             #print(len(final_path))
-            self.animate_path(path=final_path)  #uncomment to animate final path
-            #self.visualize(path=final_path)    #uncomment to visualize final path
+            # self.animate_path(path=final_path)  #uncomment to animate final path
+            self.visualize(path=final_path)    #uncomment to visualize final path
 
     def generate_grid(self, grid_index) -> None:
         '''
@@ -373,5 +375,5 @@ class FTRAdaptive():
 
 if __name__ == "__main__":
     obj1 = FTRAdaptive(tie_break=LARGE_G_VALUE)
-    obj1.run(grid_index=1)
+    obj1.run(grid_index=2)
     obj1.counter_expanded_nodes = 0
