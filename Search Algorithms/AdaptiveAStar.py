@@ -342,7 +342,7 @@ class FTRAdaptive():
             print("Number of nodes expanded : " + str(self.counter_expanded_nodes))
             #print(len(final_path))
             # self.animate_path(path=final_path)  #uncomment to animate final path
-            self.visualize(path=final_path)    #uncomment to visualize final path
+            # self.visualize(path=final_path)    #uncomment to visualize final path
 
     def generate_grid(self, grid_index) -> None:
         '''

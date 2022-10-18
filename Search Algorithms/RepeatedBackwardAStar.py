@@ -28,7 +28,6 @@ class FTRBackward():
         self.open_list = []             # binary heap which sorts nodes according to least f,g, or h values
         self.closed_list = []           # list with expanded nodes
         self.open_list_dict = dict()    # connects node objects to the binary heap
-        # self.actual_grid, self.explored_grid = self.generate_grid()
 
         # -----------------------------------
         # Valid moves: up, down, left, right
@@ -54,6 +53,7 @@ class FTRBackward():
 
         self.counter_expanded_nodes = 0
         self.counter = itertools.count()  # MISSION_HEAP
+        self.observed_paths = []
 
     def print_path(self, current) -> None:
         '''
@@ -230,7 +230,8 @@ class FTRBackward():
         for cell in path:
             if self.actual_grid[cell[0]][cell[1]] != 1:
                 travelled_path.append(cell)
-                self.observe_nearby_cells(current_state=cell)
+                obs = self.observe_nearby_cells(current_state=cell)
+                self.observed_paths.append(obs)
             else:
                 break
         return travelled_path
@@ -239,16 +240,19 @@ class FTRBackward():
         '''
             uses get_valid_moves() to update agent's memory
         '''
+        explored = []
         field_of_view = self.get_valid_moves(current=current_state)
         for cell in field_of_view:
             if self.actual_grid[cell[0]][cell[1]] == 1 and self.explored_grid[cell[0]][cell[1]] == 0:
                 self.explored_grid[cell[0]][cell[1]] = 1
+                explored.append(cell)
+        return explored
 
     def animate_path(self, path):
         '''
             function to visualize the final path taken by the agent in the grid
         '''
-        ani = AnimatePath(grid=self.actual_grid, path=path, start=self.start, target=self.target)
+        ani = AnimatePath(grid=self.actual_grid, path=path, start=self.start, target=self.target, observed = self.observed_paths)
         ani.show_path()
 
     def visualize(self, path):
@@ -277,7 +281,8 @@ class FTRBackward():
             # ---------------------------------------------------
             # Check the surroundings and update the explored grid
             # ---------------------------------------------------
-            self.observe_nearby_cells(current_state=self.start)
+            observed_node = self.observe_nearby_cells(current_state=self.start)
+            self.observed_paths.append(observed_node)
 
             # ----------------------------------------------
             # Empty open and closed list
@@ -314,12 +319,14 @@ class FTRBackward():
 
         if not path_exist:
             print("Cannot reach the target, nodes expanded : " + str(self.counter_expanded_nodes))
+            # self.animate_path(path=final_path)  #uncomment to animate final path
+            # self.visualize(path=final_path)    #uncomment to visualize final path
 
         else:
             print("Number of nodes expanded : " + str(self.counter_expanded_nodes))
             #print(len(final_path))
-            #self.animate_path(path=final_path)    #uncomment to animate
-            #self.visualize(path=final_path)       #uncomment to visualize
+            self.animate_path(path=final_path)    #uncomment to animate
+            # self.visualize(path=final_path)       #uncomment to visualize
 
     def generate_grid(self, grid_index) -> None:
         '''

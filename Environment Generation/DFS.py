@@ -9,7 +9,7 @@ class Cell():
     def __init__(self) -> None:
         self.grid = []
         self.r = 101
-        self.c= 101
+        self.c = 101
         self.grid_val = []
         #Defining random start and target in the range of the grid
         self.start = (randint(0,int(0.2*self.r)),randint(0,int(0.2*self.c)))
