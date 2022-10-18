@@ -3,3 +3,20 @@ Search Algorithms/__pycache__/AdaptiveAStar.cpython-310.pyc
 Search Algorithms/__pycache__/config.cpython-310.pyc
 Search Algorithms/__pycache__/RFAWithTies.cpython-310.pyc
 Search Algorithms/__pycache__/SimpleAStar.cpython-310.pyc
+Latex Source Code/Agent_path.png
+Project_Report.pdf
+Latex Source Code/Expanded_nodes_comparison1.png
+Latex Source Code/Expanded_nodes_comparison2.png
+Latex Source Code/Figure8.png
+Latex Source Code/grid_visualization_key.png
+Latex Source Code/Initial_grid.png
+Latex Source Code/RBA_expanded_path_10x10.png
+Latex Source Code/RBA_expanded_path_20x20.png
+Latex Source Code/Report.tex
+Latex Source Code/RFA_expanded_path_10x10.png
+Latex Source Code/RFA_expanded_path_20x20.png
+Latex Source Code/RFA_VS_RBA_50_grids_expanded_nodes.png
+Latex Source Code/RFA_VS_RBA_50_grids.png
+Latex Source Code/Runtime_comparison1.png
+Latex Source Code/Runtime_comparison2.png
+.gitignore
